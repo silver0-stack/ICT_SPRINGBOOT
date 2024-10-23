@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC
+ "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="boardMapper">
+<!-- namespace (이름공간) == 패키지와 같음 : 매퍼 영역에 이름을 붙여준 것으로 이해하면 됨 -->
+
+	<resultMap type="Board" id="resultBoard">
+		<result property="boardNum" column="BOARD_NUM" />
+		<result property="boardTitle" column="BOARD_TITLE" />
+		<result property="boardReadCount" column="BOARD_READCOUNT" />
+		<result property="boardWriter" column="BOARD_WRITER" />
+		<result property="boardContent" column="BOARD_CONTENT" />
+		<result property="boardOriginalFilename" column="BOARD_ORIGINAL_FILENAME" />
+		<result property="boardRenameFilename" column="BOARD_RENAME_FILENAME" />
+		<result property="boardRef" column="BOARD_REF" />
+		<result property="boardReplyRef" column="BOARD_REPLY_REF" />
+		<result property="boardLev" column="BOARD_LEV" />
+		<result property="boardReplySeq" column="BOARD_REPLY_SEQ" />
+		<result property="boardDate" column="BOARD_DATE" />	
+	</resultMap>
+
+	<resultMap type="Board" id="resultTop3">
+		<result property="boardNum" column="BOARD_NUM" />
+		<result property="boardTitle" column="BOARD_TITLE" />
+		<result property="boardReadCount" column="BOARD_READCOUNT" />
+	</resultMap>
+
+	<select id="selectTop3" resultMap="resultTop3">
+		SELECT *
+		FROM (SELECT ROWNUM RNUM, board_num, board_title, board_readcount
+		        FROM (SELECT * FROM board
+		                WHERE board_lev = 1
+		                ORDER BY board_readcount DESC, board_num DESC))
+		WHERE RNUM BETWEEN 1 AND 3
+	</select>
+	
+	<!-- 게시글(원글, 댓글, 대댓글 포함) 총 갯수 조회용 쿼리 -->
+	<select id="selectListCount" resultType="_int">
+		select count(*) from board
+	</select>
+	
+	<!-- 요청한 페이지에 출력할 원글, 댓글, 대댓글 포함된 게시글 목록 조회용 쿼리 -->
+	<select id="selectList" resultMap="resultBoard" parameterType="Paging">
+		select *
+		from (select rownum rnum, board_num, board_writer, board_title, board_content, 
+		            BOARD_ORIGINAL_FILENAME, BOARD_RENAME_FILENAME,
+		            BOARD_REF, BOARD_REPLY_REF, BOARD_LEV, BOARD_REPLY_SEQ,
+		            BOARD_READCOUNT, BOARD_DATE
+		      from (select * from board
+		            order by board_ref desc, board_reply_ref desc, 
+		                    board_lev asc, board_reply_seq asc))
+		where rnum between #{ startRow } and #{ endRow }
+	</select>
+	
+	<select id="selectBoard" parameterType="_int" resultMap="resultBoard">
+		select * from board
+		where board_num = #{ bnum }
+	</select>
+	
+	<!--  dml ********************************  -->
+	
+	<!-- 조회수 1증가 처리용 쿼리 -->
+	<update id="updateAddReadCount" parameterType="_int">
+		update board
+		set board_readcount = board_readcount + 1
+		where board_num = #{ bnum }
+	</update>
+	
+	<!-- 게시 원글 등록용 쿼리 -->
+	<insert id="insertBoard" parameterType="Board">
+		insert into board
+		values ((select max(board_num) + 1 from board), #{ boardWriter }, #{ boardTitle }, 
+				#{ boardContent }, #{ boardOriginalFilename }, #{ boardRenameFilename }, 
+				(select max(board_num) + 1 from board), null, default, default, default, default)			
+	</insert>
+	
+	<!-- 기존 등록된 댓글 | 대댓글의 순번 1증가 처리용 -->
+	<update id="updateReplySeq" parameterType="Board">
+		update board
+		set board_reply_seq = board_reply_seq + 1
+		where board_ref = #{ boardRef }
+		and board_lev = #{ boardLev }
+		<if test="boardLev == 3">
+			and board_reply_ref = #{ boardReplyRef }
+		</if>
+	</update>
+	
+	<!-- 댓글 | 대댓글 등록 처리용 -->
+	<insert id="insertReply" parameterType="Board">
+		insert into board
+		<if test="boardLev == 2">
+		values ((select max(board_num) + 1 from board), #{ boardWriter }, #{ boardTitle }, 
+				#{ boardContent }, null, null, #{ boardRef },
+				(select max(board_num) + 1 from board), #{ boardLev }, #{ boardReplySeq }, default, sysdate)	
+		</if>
+		<if test="boardLev == 3">
+		values ((select max(board_num) + 1 from board), #{ boardWriter }, #{ boardTitle }, 
+				#{ boardContent }, null, null, #{ boardRef },
+				#{ boardReplyRef }, #{ boardLev }, #{ boardReplySeq }, default, sysdate)	
+		</if>
+	</insert>
+	
+	<!-- 게시 원글, 댓글, 대댓글 삭제 처리용 쿼리 -->
+	<delete id="deleteBoard" parameterType="Board">
+		delete from board
+		<if test="boardLev == 1">
+			where board_ref = #{ boardNum }
+		</if>
+		<if test="boardLev == 2">
+			where board_reply_ref = #{ boardNum }
+		</if>
+		<if test="boardLev == 3">
+			where board_num = #{ boardNum }
+		</if>
+	</delete>
+	
+	<!-- 게시 원글 수정용 쿼리 -->
+	<update id="updateOrigin" parameterType="Board">
+		update board
+		set board_title = #{ boardTitle }, board_content = #{ boardContent }
+		<if test="boardOriginalFilename != null">
+			, board_original_filename = #{ boardOriginalFilename }
+			, board_rename_filename = #{ boardRenameFilename } 
+		</if>
+		<if test="boardOriginalFilename == null">
+			, board_original_filename = null
+			, board_rename_filename = null
+		</if>
+		where board_num = #{ boardNum }
+	</update>
+	
+	<!-- 게시 댓글, 대댓글 수정용 쿼리 -->
+	<update id="updateReply" parameterType="Board">
+		update board
+		set board_title = #{ boardTitle }, board_content = #{ boardContent }
+		where board_num = #{ boardNum }
+	</update>
+	
+	<!-- 공지글 검색용 쿼리 ********************************************** -->
+	<select id="selectSearchTitle" resultMap="resultBoard" parameterType="Search">
+		select *
+		from (select rownum rnum, board_num, board_writer, board_title, board_content, 
+		            BOARD_ORIGINAL_FILENAME, BOARD_RENAME_FILENAME,
+		            BOARD_REF, BOARD_REPLY_REF, BOARD_LEV, BOARD_REPLY_SEQ,
+		            BOARD_READCOUNT, BOARD_DATE
+		      from (select * from board
+		      		where board_lev = 1
+		      		and board_title like '%' || #{ keyword } || '%'
+		            order by board_ref desc, board_reply_ref desc,
+		                    board_lev asc, board_reply_seq asc))
+		where rnum between #{ startRow } and #{ endRow }
+	</select>
+	
+	<select id="selectSearchWriter" resultMap="resultBoard" parameterType="Search">
+		select *
+		from (select rownum rnum, board_num, board_writer, board_title, board_content, 
+		            BOARD_ORIGINAL_FILENAME, BOARD_RENAME_FILENAME,
+		            BOARD_REF, BOARD_REPLY_REF, BOARD_LEV, BOARD_REPLY_SEQ,
+		            BOARD_READCOUNT, BOARD_DATE
+		      from (select * from board
+		      		where board_lev = 1
+		      		and board_writer like '%' || #{ keyword } || '%'
+		            order by board_ref desc, board_reply_ref desc,
+		                    board_lev asc, board_reply_seq asc))
+		where rnum between #{ startRow } and #{ endRow }
+	</select>
+	
+	<select id="selectSearchDate" resultMap="resultBoard" parameterType="Search">
+		select *
+		from (select rownum rnum, board_num, board_writer, board_title, board_content, 
+		            BOARD_ORIGINAL_FILENAME, BOARD_RENAME_FILENAME,
+		            BOARD_REF, BOARD_REPLY_REF, BOARD_LEV, BOARD_REPLY_SEQ,
+		            BOARD_READCOUNT, BOARD_DATE
+		      from (select * from board
+		      		where board_lev = 1
+		      		and board_date between #{ begin } and #{ end }
+		            order by board_ref desc, board_reply_ref desc,
+		                    board_lev asc, board_reply_seq asc))
+		where rnum between #{ startRow } and #{ endRow }
+	</select>
+	
+	<!-- 게시글 검색관련 목록 총 갯수 조회용 쿼리 ************************************* -->
+	<select id="selectSearchTitleCount" resultType="_int" parameterType="string">
+		select count(*) from board
+		where board_title like '%' || #{ keyword } || '%'
+	</select>
+	
+	<select id="selectSearchWriterCount" resultType="_int" parameterType="string">
+		select count(*) from board
+		where board_writer like '%' || #{ keyword } || '%'
+	</select>
+	
+	<select id="selectSearchDateCount" resultType="_int" parameterType="Search">
+		select count(*) from board
+		where board_date between #{ begin } and #{ end }
+	</select>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
