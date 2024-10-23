@@ -1,0 +1,33 @@
+# Git 설정: 모든 텍스트 파일은 자동으로 줄바꿈을 정규화
+* text=auto
+
+# 특정 파일 유형에 대한 줄바꿈 방식 설정
+*.java text
+*.xml text
+*.properties text
+*.gradle text
+*.yml text
+*.yaml text
+*.md text
+
+# Windows 스크립트 파일은 CRLF 사용
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Unix/Linux 스크립트 파일은 LF 사용
+*.sh text eol=lf
+
+# 기타 설정
+*.js text
+*.css text
+*.html text
+
+# 바이너리 파일 무시
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.jar binary
+*.war binary
