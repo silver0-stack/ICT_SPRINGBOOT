@@ -1,57 +1,39 @@
 # =============================
-# Java 관련 무시 설정
+# IDE 관련 파일
 # =============================
 
-# 컴파일된 클래스 파일
-*.class
-
-# 로그 파일
-*.log
-
-# 패키징된 JAR/WAR 파일
-*.jar
-*.war
-*.ear
-
-# 빌드 디렉토리
-/build/
-/target/
-
-# Maven 관련 파일
-!.mvn/wrapper/maven-wrapper.jar
-.mvn/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-
-# Gradle 관련 파일
-.gradle/
-build/
-!gradle/wrapper/gradle-wrapper.jar
-.gradle-cache/
-.gradle-build-cache/
-
-# Eclipse 관련 파일
+# Eclipse
+.metadata/
 .project
 .classpath
 .settings/
 bin/
 
-# IntelliJ IDEA 관련 파일
+# IntelliJ IDEA
 .idea/
-*.iws
 *.iml
-*.ipr
+*.iws
 out/
 
-# VS Code 관련 파일
+# VS Code
 .vscode/
-.history/
 
 # =============================
-# 운영체제별 무시 설정
+# 빌드 도구 관련
+# =============================
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/
+
+# =============================
+# 운영체제별 파일
 # =============================
 
 # macOS
@@ -66,10 +48,13 @@ Desktop.ini
 *~
 
 # =============================
-# 기타 무시 설정
+# 기타 불필요한 파일
 # =============================
 
-# 환경 설정 파일 (비밀 키, 패스워드 등 민감 정보 포함 가능)
+# 로그 파일
+*.log
+
+# 환경 설정 파일
 .env
 *.env
 
@@ -77,14 +62,16 @@ Desktop.ini
 coverage/
 *.lcov
 
-# Jupyter Notebook 체크포인트
-.ipynb_checkpoints/
+# Java 패키징 파일
+*.jar
+*.war
+*.ear
 
 # =============================
-# 사용자 정의 무시 설정
+# 사용자 정의
 # =============================
 
-# 프로젝트에 따라 추가적으로 무시하고 싶은 파일이나 디렉토리를 아래에 추가하세요.
-# 예:
+# 필요에 따라 추가적인 폴더나 파일을 여기에 추가합니다.
+# 예를 들어, 특정 데이터 디렉토리나 캐시 디렉토리를 제외할 수 있습니다.
 # /node_modules/
 # /data/
