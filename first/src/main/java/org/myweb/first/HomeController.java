@@ -20,30 +20,19 @@ public class HomeController {
 	
 	private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
 	
-	/**
-	 * Simply selects the home view to render by returning its name.
-	 */
-	//common/main.jsp 로 forward 되어서
-	//스프링부트에서는  jsp 파일을 뷰 파일로 지정 시에는 반드시 ModelAndView 리턴 형태로 사용해야 함
+	//common/main.jsp 를 내보내기 위한 요청 메소드
+	//스프링부트에서는 jsp 파일을 뷰파일로 지정시에는 반드시 ModelAndView 리턴 형태로 사용
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public ModelAndView home(ModelAndView mv) {
-		mv.setViewName("common/main"); // common/main.jsp 로 forward
+		mv.setViewName("common/main"); //내보낼 뷰파일명
 		return mv;
 	}
 	
 	//index.jsp 가 웰컴 요청될 때 포워딩된 요청을 받아서, common/main.jsp 를 내보내기 위한 메소드
 	@RequestMapping("main.do")
 	public ModelAndView forwardMain(ModelAndView mv) {
-		mv.setViewName("common/main"); // common/main.jsp 로 forward
+		mv.setViewName("common/main"); //내보낼 뷰파일명
 		return mv;
-	}
+	}//main.do end
 	
-}
-
-
-
-
-
-
-
-
+}//HomeController end

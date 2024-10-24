@@ -1,14 +1,5 @@
 package org.myweb.first.board.controller;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.json.simple.JSONArray;
@@ -18,8 +9,6 @@ import org.myweb.first.board.model.service.BoardService;
 import org.myweb.first.common.FileNameChange;
 import org.myweb.first.common.Paging;
 import org.myweb.first.common.Search;
-import org.myweb.first.member.model.dto.Member;
-import org.myweb.first.notice.model.dto.Notice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,13 +21,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+
 @Controller
 public class BoardController {
 	private static final Logger logger = LoggerFactory.getLogger(BoardController.class);
 
 	@Autowired
 	private BoardService boardService;
-
 
 	// 뷰 페이지 이동 처리용 메소드 ---------------------------------------
 	// 새 게시 원글 등록 페이지로 이동 처리용
@@ -198,7 +191,7 @@ public class BoardController {
 	// 공통모듈로 작성된 FileDownloadView 클래스를 이용함 => 반드시 리턴타입이 ModelAndView 여야 함
 	@RequestMapping("bfdown.do")
 	public ModelAndView filedownMethod(HttpServletRequest request, ModelAndView mv,
-									   @RequestParam("ofile") String originalFileName, @RequestParam("rfile") String renameFileName) {
+			@RequestParam("ofile") String originalFileName, @RequestParam("rfile") String renameFileName) {
 
 		// 게시글 첨부파일 저장 폴더 경로 지정
 		String savePath = request.getSession().getServletContext().getRealPath("resources/board_upfiles");

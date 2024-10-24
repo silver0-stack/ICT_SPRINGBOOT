@@ -24,44 +24,46 @@ repositories {
     mavenCentral()
 }
 
-//스프링부트는 JSP 사용을 권장하지 않음 (별도의 template engine을 사용함)
-// spring-boot-starter-web 에서 JSP를 ���게 사용할 수 있도록 JSP support를 추가
+//스프링부트는 jsp 사용을 권장하지 않는다. (별도의 template 을 사용함)
+//spring-boot-starter-tomcat spring-boot-starter-web 에 의해 자동 포함됨
+//스프링부트에 포함된 톰캣은 jsp 엔진이 들어 있지 않음 (jsp 코드 해석 못함, jsp 지원 안됨)
+//그러므로 jsp 에 대한 별도의 의존성 추가가 필요함
 dependencies {
-    // BCryptPasswordEncoder
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-
-
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-web' // tomcat embedded container
+    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
 
-    //compileOnly 'javax.servlet:jstl:1.2' // group 과 name을 : 으로 분리해서 dependency 추가
+    //jsp 사용을 위한 라이브러리 의존성 추가
+    //implementation 'javax.servlet:jstl:1.2'
+    implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
+    //compileOnly 'javax.servlet:servlet-api'
+    //compileOnly 'javax.servlet.jsp:jsp-api'
+    implementation 'jakarta.servlet:jakarta.servlet-api'
+    implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api'
+    implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl'
 
-    implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:2.0.0'
-    implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:2.0.0'
-
+    // https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-jasper
+    compileOnly 'org.apache.tomcat.embed:tomcat-embed-jasper:10.1.18'
     // https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
-    compileOnly 'com.googlecode.json-simple:json-simple:1.1.1' //ajax
-    implementation('org.apache.tomcat.embed:tomcat-embed-jasper') // JSP
+    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 
+    //oracle db 와 jpa 연결 설정
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'com.oracle.database.jdbc:ojdbc8'
 
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
-    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat' // 스프링부트에 포함된 톰캣은 JSP 를 지원하지 않음
-    //
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.3'
+//    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.3'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
-
 tasks.named('test') {
     useJUnitPlatform()
 }
