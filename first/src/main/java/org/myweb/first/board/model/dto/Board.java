@@ -26,6 +26,7 @@ public class Board {
 
 
 
+
     //dto --> entity
     public BoardEntity toEntity() {
        return BoardEntity.builder()
@@ -36,7 +37,7 @@ public class Board {
                .boardOriginalFilename(boardOriginalFilename)
                .boardRenameFilename(boardRenameFilename)
                .boardReadCount(boardReadCount)
-               .boardDate(boardDate)
+               .boardDate(java.sql.Date.valueOf(boardDate))
                .build();
     }
 }

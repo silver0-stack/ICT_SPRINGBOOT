@@ -50,13 +50,13 @@ public class ReplyEntity {
     private Integer replyReplyRef; // REPLY_REPLY_REF NUMBER
 
     @Column(name = "REPLY_LEV", nullable = false)
-    private Integer replyLev = 1; // REPLY_LEV NUMBER NOT NULL, 기본값 1
+    private Integer replyLev; // REPLY_LEV NUMBER NOT NULL, 기본값 1
 
     @Column(name = "REPLY_SEQ", nullable = false)
-    private Integer replySeq = 1; // REPLY_SEQ NUMBER NOT NULL, 기본값 1
+    private Integer replySeq; // REPLY_SEQ NUMBER NOT NULL, 기본값 1
 
     @Column(name = "REPLY_READCOUNT", nullable = false)
-    private Integer replyReadCount = 0; // REPLY_READCOUNT NUMBER NOT NULL, 기본값 0
+    private Integer replyReadCount; // REPLY_READCOUNT NUMBER NOT NULL, 기본값 0
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(name = "REPLY_DATE", nullable = false, updatable = false)
