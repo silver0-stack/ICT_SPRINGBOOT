@@ -66,6 +66,7 @@ hr { clear: both; }
 		<li><a href="blist.do?page=1">게시글</a></li>
 		<li><a href="moveAjax.do">ajax처리</a></li>
 		<li><a href="moveApi.do">api처리</a></li>
+		<li><a href="movePost.do">전시목록페이지로 이동</a></li>		
 	</ul>
 	</nav>
 </c:if>
@@ -92,6 +93,7 @@ hr { clear: both; }
 		<li><a href="moveAjax.do">ajax처리</a></li>
 		<li><a href="moveApi.do">api처리</a></li>
 		<li><a href="myinfo.do?userId=${ sessionScope.loginUser.userId }">my page</a></li>
+		<li><a href="chattingPage.do">채팅</a></li>
 	</ul>
 	</nav>
 </c:if>

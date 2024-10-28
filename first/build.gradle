@@ -25,28 +25,20 @@ repositories {
 }
 
 //스프링부트는 jsp 사용을 권장하지 않는다. (별도의 template 을 사용함)
-//spring-boot-starter-tomcat spring-boot-starter-web 에 의해 자동 포함됨
-//스프링부트에 포함된 톰캣은 jsp 엔진이 들어 있지 않음 (jsp 코드 해석 못함, jsp 지원 안됨)
-//그러므로 jsp 에 대한 별도의 의존성 추가가 필요함
+//spring-boot-starter-tomcat 은 spring-boot-starter-web 에 의해 자동 포함됨
+//스프링부트에 포함된 톰켓은 jsp 엔진이 들어 있지 않음 (jsp 코드 해석 못함, jsp 지원 안됨)
+//그러므로 jsp 애 대한 별도의 의존성 추가가 필요함
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+   implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
 
     //jsp 사용을 위한 라이브러리 의존성 추가
-    //implementation 'javax.servlet:jstl:1.2'
     implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
-    //compileOnly 'javax.servlet:servlet-api'
-    //compileOnly 'javax.servlet.jsp:jsp-api'
     implementation 'jakarta.servlet:jakarta.servlet-api'
     implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api'
     implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl'
 
-    // https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-jasper
-    compileOnly 'org.apache.tomcat.embed:tomcat-embed-jasper:10.1.18'
     // https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 
@@ -60,10 +52,10 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-//    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.3'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+
 tasks.named('test') {
     useJUnitPlatform()
 }

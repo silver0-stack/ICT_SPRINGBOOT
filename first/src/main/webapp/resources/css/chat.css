@@ -1,0 +1,82 @@
+@charset "UTF-8";
+
+.chat {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px; /* 원하는 너비로 조정 */
+    background-color: #f2f2f2;
+    border: 1px solid #ccc;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.startchat {
+    text-align: center;
+}
+
+.startchat input[type="text"] {
+    width: 200px; /* 입력 필드 너비 조정 */
+    margin-bottom: 10px;
+}
+
+.startchat button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition-duration: 0.4s;
+}
+
+.startchat button:hover {
+    background-color: #45a049;
+}
+
+#chatbox {
+    margin-top: 20px; /* 채팅 창과 시작 버튼 사이 여백 조정 */
+}
+
+#messageWindow {
+    height: 200px;
+    overflow-y: scroll;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 3px;
+    background-color: #f9f9f9;
+}
+
+.chat_content {
+    background-color:#BCF5A9;
+    text-align:right;
+    display: inline-block;
+    padding:10px;
+    margin:10px;
+    border-radius:10px;
+}
+
+.other-side {
+    background-color:#A9F5E1;
+    text-align:left;
+    display: inline-block;
+    padding:10px;
+    margin:10px;
+    border-radius:10px;
+}
+
+#inputMessage {
+    width: calc(80% - 90px);
+    margin-right: 10px;
+    marging:20px;
+}
+
+#endBtn {
+    margin-left: 10px;
+}

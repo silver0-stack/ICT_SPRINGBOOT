@@ -7,33 +7,31 @@ import org.myweb.first.notice.jpa.entity.NoticeEntity;
 
 import java.util.Date;
 
-@Data //@Getter, @Setter, toString, equals, hashCode 오버라이딩 까지 자동 생성됨
+@Data  //@Getter, @Setter, @ToString, @Equals, @HashCode 오버라이딩 까지 자동 생성됨
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class Notice {
-	//@NotBlank
-	// String, CharSequence 타입에만 적용할 수 있음
-	//빈 문자열 또는 공백 문자열을 허용하지 않음
-	private int noticeNo;			//NOTICENO	NUMBER
 	@NotBlank
-	private String noticeTitle;		//NOTICETITLE	VARCHAR2(50 BYTE)
-	@JsonFormat(pattern = "yyyy-MM-dd")
-	private Date noticeDate;	//NOTICEDATE	DATE
-	private String noticeWriter;		//NOTICEWRITER	VARCHAR2(50 BYTE)
-	private String noticeContent;		//NOTICECONTENT	VARCHAR2(2000 BYTE)
-	private String originalFilePath;	//ORIGINAL_FILEPATH	VARCHAR2(100 BYTE)
-	private String renameFilePath;	//RENAME_FILEPATH	VARCHAR2(100 BYTE)
-	private String importance;		//IMPORTANCE	CHAR(1 BYTE)
-	@JsonFormat(pattern = "yyyy-MM-dd")
-	private String impEndDate;	//IMP_END_DATE	DATE
-	private int readCount;			//READCOUNT	NUMBER
+	private int noticeNo;
+	@NotBlank
+	private String noticeTitle;
+	@JsonFormat(pattern="yyyy-MM-dd")
+	private String noticeDate;
+	private String noticeWriter;
+	private String noticeContent;
+	private String originalFilePath;
+	private String renameFilePath;
+	private String importance;
+	@JsonFormat(pattern="yyyy-MM-dd")
+	private String impEndDate;
+	private int readCount;
 
 	public NoticeEntity toEntity() {
 		return NoticeEntity.builder()
 				.noticeNo(noticeNo)
 				.noticeTitle(noticeTitle)
-				.noticeDate(noticeDate)
+				.noticeDate(java.sql.Date.valueOf(noticeDate))
 				.noticeWriter(noticeWriter)
 				.noticeContent(noticeContent)
 				.originalFilePath(originalFilePath)
@@ -42,6 +40,5 @@ public class Notice {
 				.impEndDate(java.sql.Date.valueOf(impEndDate))
 				.readCount(readCount)
 				.build();
-	}//toEntity() end
-
-}//Notice end
+	}
+}

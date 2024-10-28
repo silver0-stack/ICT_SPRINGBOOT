@@ -45,10 +45,10 @@ function requestDelete(){
 	<tr><th>제 목</th><td>${ notice.noticeTitle }</td></tr>
 	<tr><th>작성자</th><td>${ notice.noticeWriter }</td></tr>
 	<tr><th>등록날짜</th>
-		<td><fmt:formatDate value="${ notice.noticeDate }" pattern="yyyy-MM-dd" /></td></tr>
+		<td>${ notice.noticeDate }</td></tr>
 	<tr><th>중요도</th><td>${ notice.importance }</td></tr>
 	<tr><th>중요도 설정 종료 날짜</th>
-		<td><fmt:formatDate value="${ notice.impEndDate }" pattern="yyyy-MM-dd" /></td></tr>
+		<td>${ notice.impEndDate }</td></tr>
 	<tr><th>첨부파일</th>
 		<td>
 			<c:url var="nfdown" value="nfdown.do">

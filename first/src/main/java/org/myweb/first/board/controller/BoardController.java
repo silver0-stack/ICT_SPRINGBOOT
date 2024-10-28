@@ -1,7 +1,13 @@
 package org.myweb.first.board.controller;
 
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.myweb.first.board.model.dto.Board;
@@ -20,11 +26,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
-
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
 
 @Controller
 public class BoardController {
@@ -165,7 +166,8 @@ public class BoardController {
 
 	// 게시글(원글, 댓글, 대댓글) 상세 내용보기 요청 처리용
 	@RequestMapping("bdetail.do")
-	public ModelAndView boardDetailMethod(@RequestParam("bnum") int boardNum, @RequestParam("page") int currentPage,
+	public ModelAndView boardDetailMethod(@RequestParam("bnum") int boardNum,
+										  @RequestParam("page") int currentPage,
 			ModelAndView mv) {
 		logger.info("ndetail.do : " + boardNum); // 전송받은 값 확인
 
@@ -191,7 +193,7 @@ public class BoardController {
 	// 공통모듈로 작성된 FileDownloadView 클래스를 이용함 => 반드시 리턴타입이 ModelAndView 여야 함
 	@RequestMapping("bfdown.do")
 	public ModelAndView filedownMethod(HttpServletRequest request, ModelAndView mv,
-			@RequestParam("ofile") String originalFileName, @RequestParam("rfile") String renameFileName) {
+									   @RequestParam("ofile") String originalFileName, @RequestParam("rfile") String renameFileName) {
 
 		// 게시글 첨부파일 저장 폴더 경로 지정
 		String savePath = request.getSession().getServletContext().getRealPath("resources/board_upfiles");
@@ -385,7 +387,7 @@ public class BoardController {
 			model.addAttribute("bnum", board.getBoardNum());
 			model.addAttribute("page", currentPage);
 
-			return "redirect:bdetail.do";
+			return "redirect:bdetail.do?bnum="+ board.getBoardNum() + "&page=" + currentPage;
 		} else {
 			model.addAttribute("message", board.getBoardNum() + "번 게시 원글 수정 실패!");
 			return "common/error";

@@ -23,7 +23,7 @@
 	<tr><th>제 목</th><td>${ notice.noticeTitle }</td></tr>
 	<tr><th>작성자</th><td>${ notice.noticeWriter }</td></tr>
 	<tr><th>등록날짜</th>
-		<td><fmt:formatDate value="${ notice.noticeDate }" pattern="yyyy-MM-dd" /></td></tr>
+		<td>${ notice.noticeDate }</td></tr>
 	<tr><th>첨부파일</th>
 		<td>
 			<c:url var="nfdown" value="nfdown.do">

@@ -113,7 +113,7 @@ $(function(){
 			values = '';
 			for(var i in json.blist){
 				values += '<tr><td>' + json.blist[i].bnum
-						+ '</td><td><a href="bdetail.do?bnum=' + json.blist[i].bnum + '">' 
+						+ '</td><td><a href="bdetail.do?bnum=' + json.blist[i].bnum + '&page=1">'
 						+ decodeURIComponent(json.blist[i].btitle).replace(/\+/gi, ' ')
 						+ '</a></td><td>' + json.blist[i].rcount + '</td></tr>';
 			}

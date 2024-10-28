@@ -129,7 +129,7 @@ $(function(){
 				<c:if test="${ empty n.originalFilePath }">&nbsp;</c:if>
 			</td>
 			<td align="center">
-				<fmt:formatDate value="${ n.noticeDate }" pattern="yyyy-MM-dd" />
+				${ n.noticeDate }
 			</td>
 		</tr>
 	</c:forEach>
