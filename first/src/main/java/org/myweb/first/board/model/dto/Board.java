@@ -22,7 +22,7 @@ public class Board {
     private String boardRenameFilename;    //BOARD_RENAME_FILENAME	VARCHAR2(100 BYTE) : 첨부파일 바뀐 이름
     private int boardReadCount;    //BOARD_READCOUNT	NUMBER : 게시글 조회수
     @JsonFormat(pattern = "yyyy-MM--dd")
-    private Date boardDate;    //BOARD_DATE	DATE : 게시글 등록 날짜
+    private String boardDate;    //BOARD_DATE	DATE : 게시글 등록 날짜
 
 
 

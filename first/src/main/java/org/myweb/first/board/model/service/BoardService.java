@@ -1,26 +1,38 @@
 package org.myweb.first.board.model.service;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.myweb.first.board.jpa.entity.BoardEntity;
+import org.myweb.first.board.jpa.repository.BoardRepository;
 import org.myweb.first.board.model.dto.Board;
 import org.myweb.first.common.Paging;
 import org.myweb.first.common.Search;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j    //Logger 객체 선언임, 별도의 로그객체 선언 필요없음, 제공되는 레퍼런스는 log 임
 @Service
-@RequiredArgsConstructor
-@Transactional
+//@RequiredArgsConstructor
+//@Transactional
 public class BoardService {
+	// 스프링 MVC 구조를 스프링부르에서 그대로 사용해도 됨
+	// Service에 대한 interface를 만들고, 해당 서비스를 상속받은 ServiceImpl 클래스를 만드는 구조로 작성해도 됨
 
-
-
+	// 인터페이스는 객체 생성하지 않기 때문에 new 객체 생성할 필요 없기 때문에 @Autowired 어노테이션 필요없음
+	private BoardRepository boardRepository;
 
 	public ArrayList<Board> selectTop3() {
+		// jpa가 제공하는 메소드를 쓴다면 findAll() 로 모두 조회해 와서 3개만 추출하는 방법 (NoticeService 참조)
+		// 필요할 경우 JPA가 제공하는 메소드로는 해결이 안되는 기능을 메소드를 추가해서 사용할 수 있음
+		List<BoardEntity> nativeList = boardRepository.findTop3();
+
+
 		return null;
+
 	}
 
 

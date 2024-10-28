@@ -11,13 +11,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.myweb.first.board.model.dto.Board;
+import org.myweb.first.board.model.dto.Reply;
 import org.myweb.first.board.model.service.BoardService;
+import org.myweb.first.board.model.service.ReplyService;
 import org.myweb.first.common.FileNameChange;
 import org.myweb.first.common.Paging;
 import org.myweb.first.common.Search;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,6 +38,8 @@ public class BoardController {
 
 	@Autowired
 	private BoardService boardService;
+	@Autowired
+	private ReplyService replyService;
 
 	// 뷰 페이지 이동 처리용 메소드 ---------------------------------------
 	// 새 게시 원글 등록 페이지로 이동 처리용
@@ -41,17 +48,6 @@ public class BoardController {
 		return "board/boardWriteForm";
 	}
 
-	// 댓글, 대댓글 등록 페이지로 이동 처리용
-	@RequestMapping("breplyform.do")
-	public ModelAndView moveReplyPage(ModelAndView mv, @RequestParam("bnum") int boardNum,
-			@RequestParam("page") int currentPage) {
-
-		mv.addObject("bnum", boardNum);
-		mv.addObject("currentPage", currentPage);
-		mv.setViewName("board/boardReplyForm");
-
-		return mv;
-	}
 
 	// 게시글(원글, 댓글, 대댓글) 수정페이지로 이동 처리용
 	@RequestMapping("bupview.do")
@@ -257,37 +253,6 @@ public class BoardController {
 		}
 	} // binsert.do
 
-	// 게시 댓글, 대댓글 등록 요청 처리용 (파일 업로드 기능 없음)
-	@RequestMapping(value = "breply.do", method = RequestMethod.POST)
-	public String replyInsertMethod(Board reply, Model model, @RequestParam("bnum") int bnum,
-			@RequestParam("page") int page) {
-		// 1. 새로 등록할 댓글은 원글을 조회해 옴 또는 등록할 대댓글은 참조하는 댓글을 조회해 옴
-		Board origin = boardService.selectBoard(bnum);
-
-		// 2. 새로 등록할 댓글 또는 대댓글의 레벨을 지정함
-		reply.setBoardLev(origin.getBoardLev() + 1);
-
-		// 3. 참조 원글 번호(boardRef) 지정함
-		reply.setBoardRef(origin.getBoardRef());
-
-		// 4. 새로 등록할 reply 이 대댓글(boardLev : 3)이면, 참조 댓글번호(boardReplyRef) 지정함
-		if (reply.getBoardLev() == 3) {
-			// 참조댓글번호 지정함
-			reply.setBoardReplyRef(origin.getBoardReplyRef());
-		}
-
-		// 5. 최근 등록 댓글 | 대댓글의 순번을 1로 지정함
-		reply.setBoardReplySeq(1);
-		// 6. 기존 같은 레벨 & 같은 원글|댓글에 기록된 글은 순번은 1증가시킴
-		boardService.updateReplySeq(reply);
-
-		if (boardService.insertReply(reply) > 0) {
-			return "redirect:blist.do?page=" + page;
-		} else {
-			model.addAttribute("message", bnum + "번 글에 대한 댓글 | 대댓글 등록 실패!");
-			return "common/error";
-		}
-	} // breply.do
 
 	// 게시글 (원글, 댓글, 대댓글) 삭제 요청 처리용
 	@RequestMapping("bdelete.do")
@@ -309,21 +274,6 @@ public class BoardController {
 		}
 	}
 
-	// 댓글, 대댓글 수정 요청 처리용
-	@RequestMapping(value = "breplyupdate.do", method = RequestMethod.POST)
-	public String replyUpdateMethod(Board reply, @RequestParam("page") int currentPage, Model model) {
-
-		if (boardService.updateReply(reply) > 0) {
-			// 댓글, 대댓글 수정 성공시 다시 상세보기가 수정된 내용을 보여지게 처리
-			model.addAttribute("bnum", reply.getBoardNum());
-			model.addAttribute("page", currentPage);
-
-			return "redirect:bdetail.do";
-		} else {
-			model.addAttribute("message", reply.getBoardNum() + "번 글 수정 실패!");
-			return "common/error";
-		}
-	}
 
 	// 게시 원글 수정 요청 처리용 (파일 업로드 기능 사용)
 	@RequestMapping(value = "borginupdate.do", method = RequestMethod.POST)
@@ -421,8 +371,25 @@ public class BoardController {
 		// 검색결과가 적용된 총 목록갯수 조회해서 총 페이지 수 계산함
 		int listCount = boardService.selectSearchTitleCount(keyword);
 		// 페이지 관련 항목 계산 처리
-		Paging paging = new Paging(listCount, limit, currentPage, "bsearchTitle.do");
-		paging.calculate();
+		//Paging paging = new Paging(listCount, limit, currentPage, "bsearchTitle.do");
+		//paging.calculate();
+
+
+		// JPA 에 사용될 Pageable 객체 생성
+		Pageable pageable = PageRequest.of(currentPage - 1, limit, Sort.Direction.DESC, "boardNum");
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 		// 마이바티스 매퍼에서 사용되는 메소드는 Object 1개만 전달할 수 있음
 		// paging.startRow, paging.endRow + keyword 같이 전달해야 하므로 => 하나의 객체로 만들어야 함
