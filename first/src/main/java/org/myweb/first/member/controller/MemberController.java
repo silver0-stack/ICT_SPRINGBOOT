@@ -130,61 +130,50 @@ public class MemberController {
 		out.close();
 	}
 
-	// 회원 가입 요청 처리용 메소드 (파일 첨부 기능이 있는 경우 처리 방식) => 첨부된 파일은 별도로 전송받도록 처리함
-	// 서버상의 파일 저장 폴더 지정을 위해서 request 객체가 사용됨
-	// 업로드되는 파일은 따로 전송받음 => multipart 방식으로 전송옴 => spring 이 제공하는 MultipartFile 사용함
+	// 회원 가입 요청 처리 메소드 (파일 첨부 기능 포함)
+// 서버상의 파일 저장 폴더 지정을 위해 request 객체 사용
 	@RequestMapping(value = "enroll.do", method = {RequestMethod.POST, RequestMethod.GET})
 	public String memberInsertMethod(Member member, Model model, HttpServletRequest request,
-			@RequestParam(name="photofile", required=false) MultipartFile mfile) {
-		log.info("enroll.do : " + member); // 전송온 값 확인
+									 @RequestParam(name="photofile", required=false) MultipartFile mfile) {
+		log.info("Received member details: " + member);
 
 		// 패스워드 암호화 처리
-//			String encodePwd = bcryptPasswordEncoder.encode(member.getUserPwd());
-//			member.setUserPwd(encodePwd);
 		member.setUserPwd(bcryptPasswordEncoder.encode(member.getUserPwd()));
-		log.info("after encode : " + member.getUserPwd() + ", length : " + member.getUserPwd().length());
+		log.info("Encoded password: " + member.getUserPwd());
 
-		// 회원가입시 사진 파일첨부가 있을 경우, 저장 폴더 경로 지정 -----------------------------------
+		// 기본값 설정
+		if (member.getAdminYN() == null) member.setAdminYN("Y");
+		if (member.getLoginOk() == null) member.setLoginOk("Y");
+		if (member.getSignType() == null) member.setSignType("direct");
+
+		// 파일 저장 경로 지정
 		String savePath = request.getSession().getServletContext().getRealPath("resources/photo_files");
-		// 서버 엔진이 구동하는 웹에플리케이션(Context)의 루트(webapp) 아래의 "resources/photo_files" 까지의
-		// 경로 정보를 조회함
-		log.info("savePath : " + savePath);
+		log.info("File save path: " + savePath);
 
-		// 첨부파일이 있다면
+		// 파일 첨부 처리
 		if (!mfile.isEmpty()) {
-			// 전송온 파일 이름 추출함
-			String fileName = mfile.getOriginalFilename();
-			// 여러 회원이 업로드한 사진파일명이 중복될 경우를 대비해서 저장파일명 이름바꾸기함
-			// 바꿀 파일이름은 개발자가 정함
-			// userId 가 기본키이므로 중복이 안됨 => userId_filename 저장형태로 정해봄
-			String renameFileName = member.getUserId() + "_" + fileName;
+			String originalFileName = mfile.getOriginalFilename();
+			String renamedFileName = member.getUserId() + "_" + originalFileName;
 
-			// 저장 폴더에 저장 처리
-			if (fileName != null && fileName.length() > 0) {
-				try {
-					// mfile.transferTo(new File(savePath + "\\" + fileName));
-					// 저장시 바뀐 이름으로 저장 처리함
-					mfile.transferTo(new File(savePath + "\\" + renameFileName));
-				} catch (Exception e) {
-					// 첨부파일 저장시 에러 발생
-					e.printStackTrace();
-					model.addAttribute("message", "첨부파일 업로드 실패!");
-					return "common/error";
-				}
+			try {
+				mfile.transferTo(new File(savePath + "\\" + renamedFileName));
+				member.setPhotoFileName(renamedFileName);
+			} catch (Exception e) {
+				log.error("File upload failed", e);
+				model.addAttribute("message", "첨부파일 업로드 실패!");
+				return "common/error";
 			}
+		}
 
-			// 파일 업로드 정상 처리되었다면
-			// member.setPhotoFileName(fileName); //db 저장시에는 원래 이름으로 기록함
-			member.setPhotoFileName(renameFileName); // db 저장시에는 변경된 이름으로 기록함
-		} // 첨부파일이 있을 때
-
-		if (memberService.insertMember(member) > 0) { // 회원가입 성공시
-			return "member/loginPage";
-		} else { // 회원가입 실패시
+		// 회원가입 처리
+		if (memberService.insertMember(member) > 0) {
+			return "member/loginPage";  // 성공 시 로그인 페이지로 이동
+		} else {
 			model.addAttribute("message", "회원 가입 실패! 확인하고 다시 가입해 주세요.");
 			return "common/error";
 		}
 	}
+
 
 	// '내 정보 보기' 클릭시 회원 정보 조회 요청 처리용 메소드
 	// 컨트롤러에서 뷰리졸버로 리턴하는 타입은 String(뷰파일명), ModelAndView 를 사용할 수 있음

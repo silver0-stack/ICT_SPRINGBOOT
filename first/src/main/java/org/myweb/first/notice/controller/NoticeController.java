@@ -186,6 +186,9 @@ public class NoticeController {
 		// 공지사항 첨부파일 저장 폴더를 경로 지정
 		String savePath = request.getSession().getServletContext().getRealPath("resources/notice_upfiles");
 
+		if(notice.getImportance() == null) {
+			notice.setImportance("N");
+		}
 		// 첨부파일이 있을 때
 		if (!mfile.isEmpty()) {
 			// 전송온 파일이름 추출함
@@ -276,7 +279,7 @@ public class NoticeController {
 		// 중요도 체크 안 한 경우 처리
 		if (notice.getImportance() == null) {
 			notice.setImportance("N");
-			notice.setImpEndDate(new java.sql.Date(System.currentTimeMillis()).toString()); // 오늘 날짜를 기본 날짜로 지정함
+			notice.setImpEndDate(new java.sql.Date(System.currentTimeMillis())); // 오늘 날짜를 기본 날짜로 지정함
 		}
 
 		// 첨부파일 관련 변경 사항 처리
@@ -303,7 +306,7 @@ public class NoticeController {
 
 			// 저장폴더에는 변경된 이름을 저장 처리함
 			// 파일 이름바꾸기함 : 년월일시분초.확장자
-			if (fileName != null && fileName.length() > 0) {
+			if (fileName != null && !fileName.isEmpty()) {
 				// 바꿀 파일명에 대한 문자열 만들기
 				renameFileName = FileNameChange.change(fileName, "yyyyMMddHHmmss");
 				// 바뀐 파일명 확인

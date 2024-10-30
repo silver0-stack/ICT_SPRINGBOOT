@@ -31,7 +31,7 @@ public class NoticeService {
 		//컨트롤러로 리턴할 ArrayList<Notice> 타입으로 변경 처리 필요함
 		ArrayList<Notice> list = new ArrayList<>();
 		//Page 안의 NoticeEntity 를 Notice 로 변환해서 리스트에 추가 처리함
-		for(NoticeEntity entity : entityList){
+		for (NoticeEntity entity : entityList) {
 			list.add(entity.toDto());
 		}
 		return list;
@@ -51,13 +51,16 @@ public class NoticeService {
 		//save(Entity) : Entity 가 반환되는 메소드 사용, 실패하면 에러 발생임
 		//jpa 가 제공, insert 문, update 문 처리
 		try {
+			int newNoticeNo = noticeRepository.findMaxNoticeNo() + 1;
+			notice.setNoticeNo(newNoticeNo);
 			noticeRepository.save(notice.toEntity());
 			return 1;
-		}catch(Exception e){
-			log.info(e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
 			return 0;
 		}
 	}
+
 
 
 	public ArrayList<Notice> selectTop3() {
@@ -122,10 +125,20 @@ public class NoticeService {
 		//jpa 제공하는 메소드 사용
 		//deleteById(pk로 지정된 컬럼에 대한 property): void => 실패하면 에러, 성공하면 리턴값없음
 		try {
-			noticeRepository.deleteById(noticeNo);
-			return 1;
+			// 해당 NoticeNo가 존재하는지 확인
+			Optional<NoticeEntity> existingEntity = noticeRepository.findById(noticeNo);
+
+			if(existingEntity.isPresent()){
+				noticeRepository.deleteById(noticeNo);
+				return 1;
+			}else{
+				// 존재하지 않는다면 에러 처리
+                System.out.println("Notice not found with ID: " + noticeNo);
+                return 0;
+			}
+
 		}catch(Exception e){
-			log.info(e.getMessage());
+			e.printStackTrace();
 			return 0;
 		}
 	}
@@ -135,10 +148,24 @@ public class NoticeService {
 		//save(Entity) : Entity 가 반환되는 메소드 사용, 실패하면 에러 발생하고 null 리턴
 		//jpa 가 제공, insert 문, update 문 처리
 		try {
-			noticeRepository.save(notice.toEntity());
-			return 1;
+			// 해당 NoticeNo가 존재하는지 확인
+			Optional<NoticeEntity> existingEntity = noticeRepository.findById(notice.getNoticeNo());
+
+			if(existingEntity.isPresent()){
+				// 기존 엔터티가 존재할 경우 업데이트 수행
+				NoticeEntity updatedEntity = existingEntity.get();
+				updatedEntity.setNoticeTitle(notice.getNoticeTitle());
+				updatedEntity.setNoticeContent(notice.getNoticeContent());
+				updatedEntity.setNoticeDate(notice.getNoticeDate());
+				noticeRepository.save(updatedEntity);
+				return 1;
+			}else{
+				// 존재하지 않는다면 에러 처리
+				System.out.println("Notice not found with ID: " + notice.getNoticeNo());
+				return 0;
+			}
 		}catch(Exception e){
-			log.info(e.getMessage());
+			e.printStackTrace();
 			return 0;
 		}
 	}

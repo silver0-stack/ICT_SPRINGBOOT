@@ -293,7 +293,7 @@ public class BoardController {
     @RequestMapping("bdelete.do")
     public String boardDeleteMethod(Board board, Model model, HttpServletRequest request) {
 
-        if (boardService.deleteBoard(board) > 0) { // 게시글 삭제 성공시
+        if (boardService.deleteBoard(board.getBoardNum()) > 0) { // 게시글 삭제 성공시
             // 게시글 삭제 성공시 저장 폴더에 있는 첨부파일도 삭제 처리함
             if (board.getBoardRenameFilename() != null && board.getBoardRenameFilename().length() > 0) {
                 // 게시글 첨부파일 저장 폴더 경로 지정
@@ -383,11 +383,14 @@ public class BoardController {
             board.setBoardRenameFilename(renameFileName);
         } // 첨부파일이 있을 때
 
+        // 현재ㅔ 날짜로
+        board.setBoardDate(new java.sql.Date(System.currentTimeMillis()));
+
         if (boardService.updateOrigin(board) > 0) { // 게시원글 수정 성공시
             model.addAttribute("bnum", board.getBoardNum());
             model.addAttribute("page", currentPage);
 
-            return "redirect:bdetail.do";
+            return "redirect:bdetail.do?bnum="+ board.getBoardNum()+ "&page="+currentPage;
         } else {
             model.addAttribute("message", board.getBoardNum() + "번 게시 원글 수정 실패!");
             return "common/error";

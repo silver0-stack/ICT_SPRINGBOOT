@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class MemberService {
 	@Autowired
-	private final MemberRepository memberRepository;
+	private MemberRepository memberRepository;
 
 	@Transactional
 	public int insertMember(Member member) {
@@ -30,7 +30,7 @@ public class MemberService {
 			memberRepository.save(member.toEntity()).toDto();
 			return 1;
 		}catch (Exception e) {
-			log.error(e.getMessage());
+			e.printStackTrace();
 			return 0;
 		}
 	}

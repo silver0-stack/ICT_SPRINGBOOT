@@ -123,8 +123,14 @@ public class BoardService {
 	}
 
 
-	public int deleteBoard(Board board) {
-		return 0;
+	public int deleteBoard(int boardNum) {
+		try{
+			boardRepository.deleteById(boardNum);
+			return 1;
+		}catch(Exception e){
+			e.printStackTrace();
+			return 0;
+		}
 	}
 
 
@@ -134,7 +140,13 @@ public class BoardService {
 
 
 	public int updateOrigin(Board board) {
-		return 0;
+		try{
+			boardRepository.save(board.toEntity());
+			return 1;
+		}catch(Exception e){
+			log.error("BoardService board update error: {}", e);
+			return 0;
+		}
 	}
 
 

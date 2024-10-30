@@ -24,9 +24,9 @@ public class Member {
 	private String phone;  //PHONE	VARCHAR2(13 BYTE)
 	private String email;   //EMAIL	VARCHAR2(30 BYTE)
 	@JsonFormat(pattern="yyyy-MM-dd")
-	private String enrollDate;  //ENROLL_DATE	DATE
+	private Date enrollDate;  //ENROLL_DATE	DATE
 	@JsonFormat(pattern="yyyy-MM-dd")
-	private String lastModified;  //LASTMODIFIED	DATE
+	private Date lastModified;  //LASTMODIFIED	DATE
 	private String signType;  //SIGNTYPE	VARCHAR2(10 BYTE)
 	private String adminYN;  //ADMIN_YN	CHAR(1 BYTE)
 	private String loginOk;  //LOGIN_OK	CHAR(1 BYTE)
@@ -41,8 +41,8 @@ public class Member {
 				.age(age)
 				.phone(phone)
 				.email(email)
-				.enrollDate(java.sql.Date.valueOf(enrollDate))
-				.lastModified(java.sql.Date.valueOf(lastModified))
+				.enrollDate(enrollDate)
+				.lastModified(lastModified)
 				.signType(signType)
 				.adminYN(adminYN)
 				.loginOk(loginOk)
