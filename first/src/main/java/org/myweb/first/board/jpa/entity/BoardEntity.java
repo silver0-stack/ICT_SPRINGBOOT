@@ -8,7 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.myweb.first.board.model.dto.Board;
 
-import java.util.Date;
+import java.sql.Date;
 import java.util.GregorianCalendar;
 
 // 테이블 생성에 대한 가이드 클래스임
@@ -40,7 +40,7 @@ public class BoardEntity {
 
     @PrePersist     //jpa 로 넘어가기 전(sql 에 적용하기 전)에 작동된다는 어노테이션임
     public void prePersist(){
-        boardDate = new GregorianCalendar().getGregorianChange();  //현재 날짜 시간 적용
+        boardDate = (Date) new GregorianCalendar().getGregorianChange();  //현재 날짜 시간 적용
     }
 
     public Board toDto() {
@@ -52,7 +52,7 @@ public class BoardEntity {
                 .boardOriginalFilename(boardOriginalFilename)
                 .boardRenameFilename(boardRenameFilename)
                 .boardReadCount(boardReadCount)
-                .boardDate(boardDate.toString())
+                .boardDate(boardDate)
                 .build();
     }
 

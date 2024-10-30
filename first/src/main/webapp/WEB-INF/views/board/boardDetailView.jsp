@@ -19,7 +19,7 @@
 
 <c:url var="bdel" value="bdelete.do">
 	<c:param name="boardNum" value="${ board.boardNum }" />
-	<c:param name="boardLev" value="${ board.boardLev }" />
+<%--	<c:param name="boardLev" value="${ board.boardLev }" />--%>
 	<c:param name="boardRenameFilename" value="${ board.boardRenameFilename }"/>
 </c:url>
 
@@ -83,9 +83,9 @@ function requestUpdatePage(){
 			<%-- 본인이 작성한 글이 아니면 또는 관리자이면 댓글달기 버튼 제공함 --%>
 			<c:if test="${ loginUser.userId ne board.boardWriter or loginUser.adminYN eq 'Y' }">
 				<%-- 글레벨이 3보다 작은 경우에만 표시함 : 대댓글까지만 등록할 것임 --%>
-				<c:if test="${ board.boardLev lt 3 }">
-					<button onclick="requestReply(); return false;">댓글달기</button>
-				</c:if>
+<%--				<c:if test="${ board.boardLev lt 3 }">--%>
+<%--					<button onclick="requestReply(); return false;">댓글달기</button>--%>
+<%--				</c:if>c--%>
 			</c:if>
 		</c:if> &nbsp;
 		<button onclick="javascript:location.href='${ pageContext.servletContext.contextPath }/blist.do?page=${ currentPage }';">목록</button> &nbsp; 

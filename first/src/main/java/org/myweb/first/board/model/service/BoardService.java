@@ -2,6 +2,8 @@ package org.myweb.first.board.model.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.myweb.first.common.Paging;
 import org.myweb.first.common.Search;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,18 +66,50 @@ public class BoardService {
 
 
 	public Board selectBoard(int boardNum) {
-		return null;
+		// JPA가 제공하는 메소드 사용: findById(id) 로 지정한 프로퍼티의 값(Optinal<Entity>)을 DTO로 변환
+		return boardRepository.findById(boardNum).map(BoardEntity::toDto).orElse(null);
 	}
 
+	/*
+	* 게시글 조회 시 조회수를 1 증가 시키는 메소드
+	*
+	* @param boardNum 게시글 번호
+	* @return 증가된 조회수
+	* @throws IllegalArgumentException: boardNum is null 게시글이 존재하지 않을 경우
+	* */
 
+	@Transactional
 	public int updateAddReadCount(int boardNum) {
-		return 0;
+		Optional<BoardEntity> optionalBoard = boardRepository.findById(boardNum);
+
+		if(optionalBoard.isPresent()){
+			BoardEntity board = optionalBoard.get();
+			board.setBoardReadCount(board.getBoardReadCount() + 1);
+			// 변경 감지(Dirty Checking)에 의해 트랜잭션 종료 시점에 자동으로 업데이트됨
+			return board.getBoardReadCount();
+		} else{
+			throw new IllegalArgumentException("해당 게시글을 찾을 수 없습니다. 게시글 번호: "+ boardNum );
+		}
 		
 	}
 
 
+	@Transactional
 	public int insertBoard(Board board) {
-		return 0;
+		// 추가한 메소드 사용: 현재 마지막 게시글 번호 조회용
+		board.setBoardNum(boardRepository.findLastBoardNum() + 1); //왜냐면 시퀀스는 0부터 시작이니까
+        log.info("BoardService board insert: {}", board);
+		// JPA가 제공하는 메소드 사용 : save(Entity)
+		// => pk(boardNum)에 해당되는 글 번호가 테이블에 없으면 insert 문 실행함
+		// => pk(boardNum)이 테이블에 있으면 update 문 실행함
+
+		try{
+			boardRepository.save(board.toEntity());
+			return 1;
+		}catch(Exception e){
+			log.error("BoardService board insert error: {}", e);
+			return 0;
+		}
 	}
 
 
@@ -104,31 +139,37 @@ public class BoardService {
 
 
 	public int selectSearchTitleCount(String keyword) {
-		return 0;
+		// jpa가 제공하는 전체 목록 갯수 조회하는 count() 로는 해결이 안됨
+		// 추가 작성해서 사용: 리포티토리 인터페이스에 추가 작성함
+		return boardRepository.countSearchTitle(keyword).intValue();
 	}
 
 
 	public int selectSearchWriterCount(String keyword) {
-		return 0;
+		return boardRepository.countSearchTitle(keyword).intValue();
 	}
 
 
 	public int selectSearchDateCount(Search search) {
-		return 0;
+		return boardRepository.countSearchDate(search.getBegin(), search.getEnd()).intValue();
 	}
 
 
-	public ArrayList<Board> selectSearchTitle(Search search) {
-		return null;
+	public ArrayList<Board> selectSearchTitle(String keyword, Pageable pageable) {
+		return boardRepository.findSearchTitle(keyword, pageable).getContent()
+				.stream().map(BoardEntity::toDto).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 
-	public ArrayList<Board> selectSearchWriter(Search search) {
-		return null;
+	public ArrayList<Board> selectSearchWriter(String keyword, Pageable pageable) {
+		return boardRepository.findSearchWriter(keyword, pageable).getContent()
+				.stream().map(BoardEntity::toDto).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 
-	public ArrayList<Board> selectSearchDate(Search search) {
-		return null;
+	public ArrayList<Board> selectSearchDate( java.util.Date startDate, java.util.Date endDate, Pageable pageable) {
+		return boardRepository.findSearchDate(startDate, endDate, pageable).getContent()
+				.stream().map(BoardEntity::toDto).collect(Collectors.toCollection(ArrayList::new));
 	}
+
 }
