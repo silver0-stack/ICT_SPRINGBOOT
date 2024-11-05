@@ -2,16 +2,21 @@ package org.myweb.first.member.jpa.repository;
 
 import org.myweb.first.board.jpa.entity.BoardEntity;
 import org.myweb.first.member.jpa.entity.MemberEntity;
+import org.myweb.first.member.model.dto.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface MemberRepository extends JpaRepository<MemberEntity, String> {
-    // jpa 가 제공하는 기본 메소드들을 사용할 수 있게 됨
+public interface MemberRepository extends JpaRepository<MemberEntity, String>, QuerydslPredicateExecutor<MemberEntity> {
+    // 이제 @Query 메소드가 제거되었습니다
+    // 기본적인 CRUD 작업은 JpaRepository 에서 처리됩니다
+    // 복잡한 쿼리는 MemberQueryRepository 에서 처리합니다.
+
 
 //    //검색 관련 메소드 추가
 //    //@Query + Native Query 사용 형태 (작성하는 쿼리문에 테이블과 컬럼명 사용)  -----------------------------------
