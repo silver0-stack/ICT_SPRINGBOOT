@@ -110,6 +110,7 @@ $(function(){
 	<tr>
 		<th>번호</th>
 		<th>제목</th>
+		<th>조회수</th>
 		<th>작성자</th>
 		<th>첨부파일</th>
 		<th>날짜</th>
@@ -123,6 +124,7 @@ $(function(){
 					width="15" height="15">
 				</c:if>
 				<a href="${ pageContext.servletContext.contextPath }/ndetail.do?no=${ n.noticeNo }">${ n.noticeTitle }</a></td>
+			<td align="center">${ n.readCount }</td>
 			<td align="center">${ n.noticeWriter }</td>
 			<td align="center">
 				<c:if test="${ !empty n.originalFilePath }">◎</c:if>

@@ -6,8 +6,10 @@ import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.myweb.first.board.jpa.entity.BoardEntity;
 import org.myweb.first.common.Search;
 import org.myweb.first.notice.jpa.entity.NoticeEntity;
+import org.myweb.first.notice.jpa.repository.NoticeQueryRepository;
 import org.myweb.first.notice.jpa.repository.NoticeRepository;
 import org.myweb.first.notice.model.dto.Notice;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,27 +25,33 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class NoticeService {
 	//JPA 가 제공하는 기본 메소드 사용을 하려면
-	@Autowired
 	private final NoticeRepository noticeRepository;
+
+	//JPA 제공 메소드로 해결하지 못하는 SQL 문 처리를 위한 별도의 리포지터리
+	//상속, 재구현 없는 형식
+	private final NoticeQueryRepository noticeQueryRepository;
 
 	//ArrayList<Notice> 리턴하는 메소드들이 사용하는 중복 코드는 별도의 메소드로 작성함
 	private ArrayList<Notice> toList(Page<NoticeEntity> entityList) {
 		//컨트롤러로 리턴할 ArrayList<Notice> 타입으로 변경 처리 필요함
 		ArrayList<Notice> list = new ArrayList<>();
 		//Page 안의 NoticeEntity 를 Notice 로 변환해서 리스트에 추가 처리함
-		for (NoticeEntity entity : entityList) {
+		for(NoticeEntity entity : entityList){
 			list.add(entity.toDto());
 		}
 		return list;
 	}
 
-	public Notice selectLast() {
-		return null;
-	}
-
-
-	public ArrayList<Notice> selectSearchTitle(String keyword) {
-		return null;
+	//메소드 오버로딩(overloading) : 클래스 안에 이름 같은 메소드 여러개인 경우
+	//주의 : 매개변수 자료형 또는 갯수를 다르게 구성하면 오버로딩(중복 정의) 가능함
+	private ArrayList<Notice> toList(List<NoticeEntity> entityList) {
+		//컨트롤러로 리턴할 ArrayList<Notice> 타입으로 변경 처리 필요함
+		ArrayList<Notice> list = new ArrayList<>();
+		//Page 안의 NoticeEntity 를 Notice 로 변환해서 리스트에 추가 처리함
+		for(NoticeEntity entity : entityList){
+			list.add(entity.toDto());
+		}
+		return list;
 	}
 
 	@Transactional
@@ -51,16 +59,14 @@ public class NoticeService {
 		//save(Entity) : Entity 가 반환되는 메소드 사용, 실패하면 에러 발생임
 		//jpa 가 제공, insert 문, update 문 처리
 		try {
-			int newNoticeNo = noticeRepository.findMaxNoticeNo() + 1;
-			notice.setNoticeNo(newNoticeNo);
-			noticeRepository.save(notice.toEntity());
+			notice.setNoticeNo(noticeQueryRepository.findLastNoticeNo() + 1);  //추가한 메소드
+			noticeRepository.save(notice.toEntity());  //jpa 제공
 			return 1;
-		} catch (Exception e) {
-			e.printStackTrace();
+		}catch(Exception e){
+			log.info(e.getMessage());
 			return 0;
 		}
 	}
-
 
 
 	public ArrayList<Notice> selectTop3() {
@@ -86,12 +92,16 @@ public class NoticeService {
 		return entityOptional.get().toDto();
 	}
 
-
-	public int updateAddReadCount(int noticeNo) {
-		return 0;
+	@Transactional
+	public Notice updateAddReadCount(int noticeNo) {
+		Optional<NoticeEntity> entity = noticeRepository.findById(noticeNo);
+		NoticeEntity noticeEntity = entity.get();
+		log.info("addReadCount : " + noticeEntity);
+		noticeEntity.setReadCount(noticeEntity.getReadCount() + 1);
+		return noticeRepository.save(noticeEntity).toDto();	//jpa가 제공
 	}
 
-
+	//로직을 단계별로 처리한 코드 ------------------------------------------
 	/*public ArrayList<Notice> selectList(Pageable pageable) {
 		//jpa 제공 메소드 사용
 		//findAll() : Entity 반환됨 => select * from notice 쿼리 자동 실행됨
@@ -107,7 +117,7 @@ public class NoticeService {
 		return list;
 	}*/
 
-	//별도로 작성된 toList() 메소드 이용한 코드로 변경하면
+	//별도로 작성된 toList() 메소드 이용한 코드로 변경하면 ---------------------
 	public ArrayList<Notice> selectList(Pageable pageable) {
 		return toList(noticeRepository.findAll(pageable));
 	}
@@ -125,20 +135,10 @@ public class NoticeService {
 		//jpa 제공하는 메소드 사용
 		//deleteById(pk로 지정된 컬럼에 대한 property): void => 실패하면 에러, 성공하면 리턴값없음
 		try {
-			// 해당 NoticeNo가 존재하는지 확인
-			Optional<NoticeEntity> existingEntity = noticeRepository.findById(noticeNo);
-
-			if(existingEntity.isPresent()){
-				noticeRepository.deleteById(noticeNo);
-				return 1;
-			}else{
-				// 존재하지 않는다면 에러 처리
-                System.out.println("Notice not found with ID: " + noticeNo);
-                return 0;
-			}
-
+			noticeRepository.deleteById(noticeNo);
+			return 1;
 		}catch(Exception e){
-			e.printStackTrace();
+			log.info(e.getMessage());
 			return 0;
 		}
 	}
@@ -148,61 +148,36 @@ public class NoticeService {
 		//save(Entity) : Entity 가 반환되는 메소드 사용, 실패하면 에러 발생하고 null 리턴
 		//jpa 가 제공, insert 문, update 문 처리
 		try {
-			// 해당 NoticeNo가 존재하는지 확인
-			Optional<NoticeEntity> existingEntity = noticeRepository.findById(notice.getNoticeNo());
-
-			if(existingEntity.isPresent()){
-				// 기존 엔터티가 존재할 경우 업데이트 수행
-				NoticeEntity updatedEntity = existingEntity.get();
-				updatedEntity.setNoticeTitle(notice.getNoticeTitle());
-				updatedEntity.setNoticeContent(notice.getNoticeContent());
-				updatedEntity.setNoticeDate(notice.getNoticeDate());
-				noticeRepository.save(updatedEntity);
-				return 1;
-			}else{
-				// 존재하지 않는다면 에러 처리
-				System.out.println("Notice not found with ID: " + notice.getNoticeNo());
-				return 0;
-			}
+			noticeRepository.save(notice.toEntity());
+			return 1;
 		}catch(Exception e){
-			e.printStackTrace();
+			log.info(e.getMessage());
 			return 0;
 		}
 	}
 
 	//검색용 메소드 --------------------------------------------------------
-
-	public ArrayList<Notice> selectSearchTitle(Search search) {
-		return null;
+	public ArrayList<Notice> selectSearchTitle(String keyword, Pageable pageable) {
+		return toList(noticeQueryRepository.findSearchTitle(keyword, pageable));
 	}
-
 
 	public int selectSearchTitleCount(String keyword) {
-		return 0;
+		return (int)noticeQueryRepository.countSearchTitle(keyword);
 	}
 
-
-	public ArrayList<Notice> selectSearchContent(Search search) {
-		return null;
+	public ArrayList<Notice> selectSearchContent(String keyword, Pageable pageable) {
+		return toList(noticeQueryRepository.findSearchContent(keyword, pageable));
 	}
-
 
 	public int selectSearchContentCount(String keyword) {
-		return 0;
+		return (int)noticeQueryRepository.countSearchContent(keyword);
 	}
 
-
-	public ArrayList<Notice> selectSearchDate(Search search) {
-		return null;
+	public ArrayList<Notice> selectSearchDate(Search search, Pageable pageable) {
+		return toList(noticeQueryRepository.findSearchDate(search.getBegin(), search.getEnd(), pageable));
 	}
-
 
 	public int selectSearchDateCount(Search search) {
-		return 0;
+		return (int)noticeQueryRepository.countSearchDate(search.getBegin(), search.getEnd());
 	}
 }
-
-
-
-
-

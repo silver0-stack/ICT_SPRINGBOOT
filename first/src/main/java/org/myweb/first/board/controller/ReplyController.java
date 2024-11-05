@@ -12,75 +12,133 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.sql.Date;
+
 @Slf4j
 @Controller
 public class ReplyController {
     @Autowired
     private ReplyService replyService;
 
-    // 댓글, 대댓글 등록 페이지로 이동 처리용
+    //뷰 페이지 이동처리용 ----------------------------------------------------
+
+    //게시글 댓글 등록페이지로 이동 처리용
     @RequestMapping("breplyform.do")
-    public ModelAndView moveReplyPage(ModelAndView mv, @RequestParam("bnum") int boardNum,
-                                      @RequestParam("page") int currentPage) {
+    public ModelAndView moveReplyPage(
+            @RequestParam("bnum") int boardNum,
+            @RequestParam("page") String page, ModelAndView mv) {
 
         mv.addObject("bnum", boardNum);
-        mv.addObject("currentPage", currentPage);
-        mv.setViewName("board/boardReplyForm");
+        mv.addObject("page", page);
+        mv.setViewName("reply/boardReplyForm");
+
+        return mv;
+    }
+
+    //게시글 대댓글 등록페이지로 이동 처리용
+    @RequestMapping("rreplyform.do")
+    public ModelAndView moveRreplyPage(
+            @RequestParam("boardRef") int boardRef,
+            @RequestParam("replyReplyRef") int replyReplyRef,
+            @RequestParam("page") String page,
+            ModelAndView mv) {
+        log.info("moveRreplyPage : " + boardRef + ", " + replyReplyRef);
+
+        mv.addObject("boardRef", boardRef);
+        mv.addObject("replyReplyRef", replyReplyRef);
+        mv.addObject("page", page);
+        mv.setViewName("reply/replyReplyForm");
+
+        return mv;
+    }
+
+    //게시글 댓글 | 대댓글 수정페이지로 이동 처리용
+    @RequestMapping("replyUpdatePage.do")
+    public ModelAndView moveRreplyUpdatePage(
+            @RequestParam("replyNum") int replyNum,
+            @RequestParam("page") String page,
+            ModelAndView mv) {
+        log.info("moveRreplyUpdatePage : " + replyNum + ", " + page);
+
+        Reply reply = replyService.selectReply(replyNum);
+
+        mv.addObject("reply", reply);
+        mv.addObject("page", page);
+        mv.setViewName("reply/replyUpdateView");
 
         return mv;
     }
 
 
+    //요청 처리용 ---------------------------------------------------------------
 
-    // 게시 댓글, 대댓글 등록 요청 처리용 (파일 업로드 기능 없음)
-//    @RequestMapping(value = "breply.do", method = RequestMethod.POST)
-//    public String replyInsertMethod(Reply reply, Model model, @RequestParam("bnum") int bnum,
-//                                    @RequestParam("page") int page) {
-//        // 1. 새로 등록할 댓글은 원글을 조회해 옴 또는 등록할 대댓글은 참조하는 댓글을 조회해 옴
-//        Reply origin = replyService.selectBoard(bnum);
-//
-//        // 2. 새로 등록할 댓글 또는 대댓글의 레벨을 지정함
-//        reply.setBoardLev(origin.getBoardLev() + 1);
-//
-//        // 3. 참조 원글 번호(boardRef) 지정함
-//        reply.setBoardRef(origin.getBoardRef());
-//
-//        // 4. 새로 등록할 reply 이 대댓글(boardLev : 3)이면, 참조 댓글번호(boardReplyRef) 지정함
-//        if (reply.getBoardLev() == 3) {
-//            // 참조댓글번호 지정함
-//            reply.setBoardReplyRef(origin.getBoardReplyRef());
-//        }
-//
-//        // 5. 최근 등록 댓글 | 대댓글의 순번을 1로 지정함
-//        reply.setBoardReplySeq(1);
-//        // 6. 기존 같은 레벨 & 같은 원글|댓글에 기록된 글은 순번은 1증가시킴
-//        boardService.updateReplySeq(reply);
-//
-//        if (boardService.insertReply(reply) > 0) {
-//            return "redirect:blist.do?page=" + page;
-//        } else {
-//            model.addAttribute("message", bnum + "번 글에 대한 댓글 | 대댓글 등록 실패!");
-//            return "common/error";
-//        }
-//    } // breply.do
-//
-//
-//
-//
-//    // 댓글, 대댓글 수정 요청 처리용
-//    @RequestMapping(value = "breplyupdate.do", method = RequestMethod.POST)
-//    public String replyUpdateMethod(Board reply, @RequestParam("page") int currentPage, Model model) {
-//
-//        if (boardService.updateReply(reply) > 0) {
-//            // 댓글, 대댓글 수정 성공시 다시 상세보기가 수정된 내용을 보여지게 처리
-//            model.addAttribute("bnum", reply.getBoardNum());
-//            model.addAttribute("page", currentPage);
-//
-//            return "redirect:bdetail.do";
-//        } else {
-//            model.addAttribute("message", reply.getBoardNum() + "번 글 수정 실패!");
-//            return "common/error";
-//        }
-//    }
+    //게시 댓글 등록 처리용
+    @RequestMapping(value="breply.do", method=RequestMethod.POST)
+    public String replyInsertMethod(
+            Reply reply,
+            @RequestParam("page") String page, Model model) {
+        //log.info("breply.do : " + reply);
 
+        //원글에 대한 댓글이므로 레벨을 1로 지정함
+        reply.setReplyLev(1);
+
+        if(replyService.insertReply(reply) != null) {
+            return "redirect:bdetail.do?bnum=" + reply.getBoardRef() + "&page=" + page;
+        }else {
+            model.addAttribute("message", reply.getBoardRef() + "번에 대한 댓글 등록 실패!");
+            return "common/error";
+        }
+    }
+
+    //게시 대댓글 등록 처리용
+    @RequestMapping(value="rreply.do", method=RequestMethod.POST)
+    public String rreplyInsertMethod(
+            Reply reply,
+            @RequestParam("page") String page,
+            Model model) {
+        log.info("rreply.do : " + reply);
+
+        //댓글에 대한 대댓글이므로 레벨을 2로 지정함
+        reply.setReplyLev(2);
+
+        if(replyService.insertReply(reply) != null) {
+            return "redirect:bdetail.do?bnum=" + reply.getBoardRef() + "&page=" + page;
+        }else {
+            model.addAttribute("message", reply.getBoardRef() + "번에 대한 댓글 등록 실패!");
+            return "common/error";
+        }
+    }
+
+    //댓글과 대댓글 수정 처리용
+    @RequestMapping(value="rreplyupdate.do", method=RequestMethod.POST)
+    public String replyUpdateMethod(
+            Reply reply, @RequestParam("page") String page, Model model) {
+        log.info("rreplyupdate.do : " + page);
+        //수정날짜로 변경 처리
+        reply.setReplyDate(new Date(System.currentTimeMillis()));
+
+        if(replyService.updateReply(reply) != null) {
+            //댓글과 대댓글 수정 성공시 다시 상세보기가 보여지게 처리
+            return "redirect:bdetail.do?bnum=" + reply.getBoardRef() + "&page=" + page;
+        }else {
+            model.addAttribute("message", reply.getReplyNum() + "번 글 수정 실패!");
+            return "common/error";
+        }
+    }
+
+    //댓글과 대댓글 삭제 처리용
+    @RequestMapping(value="breplydelete.do", method=RequestMethod.GET)
+    public String replyDeleteMethod(
+            @RequestParam("replyNum") int replyNum,
+            @RequestParam("boardNum") int boardNum, Model model) {
+        log.info("breplydelete.do : " + replyNum);
+
+        if(replyService.deleteReply(replyNum) > 0) {
+            //댓글과 대댓글 삭제 성공시 다시 상세보기가 보여지게 처리
+            return "redirect:bdetail.do?bnum=" + boardNum;
+        }else {
+            model.addAttribute("message", replyNum + "번 글 삭제 실패!");
+            return "common/error";
+        }
+    }
 }

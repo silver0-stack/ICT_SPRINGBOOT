@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 import org.myweb.first.member.model.dto.Member;
 
 import java.sql.Date;
-import java.util.GregorianCalendar;
-
 
 @Data
 @AllArgsConstructor
@@ -48,8 +46,9 @@ public class MemberEntity {
 
     @PrePersist     //jpa 로 넘어가기 전(sql 에 적용하기 전)에 작동된다는 어노테이션임
     public void prePersist(){
-        enrollDate = (Date) new GregorianCalendar().getGregorianChange();  //현재 날짜 시간 적용
-        lastModified = (Date) new GregorianCalendar().getGregorianChange();  //현재 날짜 시간 적용
+        //insert 문 실행시 주로 사용됨
+        enrollDate = new Date(System.currentTimeMillis());  //현재 날짜 시간 적용
+        lastModified = new Date(System.currentTimeMillis());  //현재 날짜 시간 적용
     }
 
     public Member toDto(){

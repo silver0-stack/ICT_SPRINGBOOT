@@ -6,60 +6,59 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.myweb.first.board.model.dto.Reply;
 
-import java.util.Date;
+import java.util.GregorianCalendar;
 
-@Data
-@NoArgsConstructor
+@Data    //@Getter, @Setter, @ToString, @EqualsAndHashCode, @RequiredArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-@Entity
-@Table(name = "REPLY")
+@Table(name="REPLY")  //매핑할 테이블 이름 지정함
+@Entity //JPA 가 관리함, 테이블의 컬럼과 DTO 클래스의 프로퍼티를 매핑하는 역할을 함
 public class ReplyEntity {
-    // Primary Key
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "reply_seq_generator")
-    @SequenceGenerator(name = "reply_seq_generator", sequenceName = "REPLY_SEQ", allocationSize = 1)
-    @Column(name = "REPLY_NUM", nullable = false)
-    private Integer replyNum; // REPLY_NUM NUMBER NOT NULL
+    @Id  //JPA가 객체를 관리할 때 식별할 기본키 지정
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
+    //primary key 지정에 사용함, dml 실행시 default 를 사용하므로 지정하지 말 것
+    @Column(name="REPLY_NUM", nullable = false)
+    private int replyNum;       //REPLY_NUM	NUMBER
+    @Column(name="REPLY_WRITER", nullable = false, length = 50)
+    private String replyWriter;     //REPLY_WRITER	VARCHAR2(50 BYTE)
+    @Column(name="REPLY_TITLE", nullable = false, length = 50)
+    private String replyTitle;      //REPLY_TITLE	VARCHAR2(50 BYTE)
+    @Column(name="REPLY_CONTENT", nullable = false, length = 2000)
+    private String replyContent;    //REPLY_CONTENT	VARCHAR2(2000 BYTE)
+    @Column(name="BOARD_REF")
+    private int boardRef;		  //BOARD_REF	NUMBER
+    @Column(name="REPLY_REPLY_REF")
+    private int replyReplyRef;    //REPLY_REPLY_REF	NUMBER
+    @Column(name="REPLY_LEV", columnDefinition = "1")
+    private int replyLev;       //REPLY_LEV	NUMBER
+    @Column(name="REPLY_SEQ", columnDefinition = "1")
+    private int replySeq;       //REPLY_SEQ	NUMBER
+    @Column(name="REPLY_READCOUNT", columnDefinition = "1")
+    private int replyReadCount; //REPLY_READCOUNT	NUMBER
+    @Column(name="REPLY_DATE")
+    private java.sql.Date replyDate;   //REPLY_DATE	DATE
 
-    // Foreign Keys and References
-    @Column(name = "BOARD_REF", nullable = false)
-    private Integer boardRef; // BOARD_REF NUMBER NOT NULL
+    @PrePersist  //jpa 로 넘어가지 전에 작동
+    public void prePersist() {
+        replyDate = new java.sql.Date(System.currentTimeMillis());   //boardDate 에 현재 시간 적용
+    }
 
-    @Column(name = "BOARD_REPLY_REF")
-    private Integer boardReplyRef; // BOARD_REPLY_REF NUMBER
-
-    @Column(name = "BOARD_LEV", nullable = false)
-    private Integer boardLev; // BOARD_LEV NUMBER NOT NULL
-
-    @Column(name = "BOARD_REPLY_SEQ", nullable = false)
-    private Integer boardReplySeq; // BOARD_REPLY_SEQ NUMBER NOT NULL
-
-    // Reply Details
-    @Column(name = "REPLY_WRITER", nullable = false, length = 50)
-    private String replyWriter; // REPLY_WRITER VARCHAR2(50 BYTE) NOT NULL
-
-    @Column(name = "REPLY_TITLE", nullable = false, length = 50)
-    private String replyTitle; // REPLY_TITLE VARCHAR2(50 BYTE) NOT NULL
-
-    @Column(name = "REPLY_CONTENT", nullable = false, length = 2000)
-    private String replyContent; // REPLY_CONTENT VARCHAR2(2000 BYTE) NOT NULL
-
-    @Column(name = "REPLY_REPLY_REF")
-    private Integer replyReplyRef; // REPLY_REPLY_REF NUMBER
-
-    @Column(name = "REPLY_LEV", nullable = false)
-    private Integer replyLev; // REPLY_LEV NUMBER NOT NULL, 기본값 1
-
-    @Column(name = "REPLY_SEQ", nullable = false)
-    private Integer replySeq; // REPLY_SEQ NUMBER NOT NULL, 기본값 1
-
-    @Column(name = "REPLY_READCOUNT", nullable = false)
-    private Integer replyReadCount; // REPLY_READCOUNT NUMBER NOT NULL, 기본값 0
-
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    @Column(name = "REPLY_DATE", nullable = false, updatable = false)
-    @org.hibernate.annotations.CreationTimestamp
-    private Date replyDate; // REPLY_DATE DATE NOT NULL, 기본값 SYSDATE
+    //entity --> dto 로 변환하는 메소드 추가함
+    public Reply toDto(){
+        return Reply.builder()
+                .replyNum(replyNum)
+                .replyWriter(replyWriter)
+                .replyTitle(replyTitle)
+                .replyContent(replyContent)
+                .boardRef(boardRef)
+                .replyReplyRef(replyReplyRef)
+                .replyLev(replyLev)
+                .replySeq(replySeq)
+                .replyReadCount(replyReadCount)
+                .replyDate(replyDate)
+                .build();
+    }
 }

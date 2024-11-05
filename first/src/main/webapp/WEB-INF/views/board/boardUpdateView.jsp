@@ -18,7 +18,6 @@
 
 <h2 align="center">${ board.boardNum } 번 게시글 수정 페이지</h2>
 <br>
-<%-- 원글 수정 폼 : 첨부파일 수정 기능 포함 --%>
 
 <form action="borginupdate.do" method="post" enctype="multipart/form-data">
 	<input type="hidden" name="boardNum" value="${ board.boardNum }">
@@ -56,6 +55,7 @@
 </table>
 </form>
 
+<br>
 
 <hr>
 <c:import url="/WEB-INF/views/common/footer.jsp" />

@@ -1,8 +1,12 @@
 package org.myweb.first.notice.jpa.repository;
 
+import org.myweb.first.board.jpa.entity.BoardEntity;
 import org.myweb.first.notice.jpa.entity.NoticeEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 //JPA 는 Entity 와 Repository 를 만들어서 사용하는 기술임
@@ -12,10 +16,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface NoticeRepository extends JpaRepository<NoticeEntity, Integer> {
-
-
-    // 존재하는 가장 큰 NOTICENO 찾기
-    @Query(value = "SELECT MAX(NOTICENO) FROM NOTICE", nativeQuery = true)
-    int findMaxNoticeNo();
     //jpa 가 제공하는 기본 메소드를 사용할 수 있게 됨
+
 }

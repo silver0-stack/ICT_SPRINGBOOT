@@ -38,9 +38,13 @@ public class MemberController {
 	@Autowired
 	private MemberService memberService;
 
+	//관련 객체 생성 관련 config 파일을 만들고 @Bean 으로 등록 처리하고 사용
+	//config.EncoderConfig
 	@Autowired
 	private BCryptPasswordEncoder bcryptPasswordEncoder;
 
+	//또는 직접 생성해서 사용해도 됨
+	//private BCryptPasswordEncoder bcryptPasswordEncoder = new BCryptPasswordEncoder();
 	
 	// 뷰페이지 내보내기용 메소드 -------------------------------------
 	// 로그인 페이지 내보내기용
@@ -130,50 +134,67 @@ public class MemberController {
 		out.close();
 	}
 
-	// 회원 가입 요청 처리 메소드 (파일 첨부 기능 포함)
-// 서버상의 파일 저장 폴더 지정을 위해 request 객체 사용
+	// 회원 가입 요청 처리용 메소드 (파일 첨부 기능이 있는 경우 처리 방식) => 첨부된 파일은 별도로 전송받도록 처리함
+	// 서버상의 파일 저장 폴더 지정을 위해서 request 객체가 사용됨
+	// 업로드되는 파일은 따로 전송받음 => multipart 방식으로 전송옴 => spring 이 제공하는 MultipartFile 사용함
 	@RequestMapping(value = "enroll.do", method = {RequestMethod.POST, RequestMethod.GET})
 	public String memberInsertMethod(Member member, Model model, HttpServletRequest request,
-									 @RequestParam(name="photofile", required=false) MultipartFile mfile) {
-		log.info("Received member details: " + member);
+			@RequestParam(name="photofile", required=false) MultipartFile mfile) {
+		log.info("enroll.do : " + member); // 전송온 값 확인
 
 		// 패스워드 암호화 처리
+//			String encodePwd = bcryptPasswordEncoder.encode(member.getUserPwd());
+//			member.setUserPwd(encodePwd);
 		member.setUserPwd(bcryptPasswordEncoder.encode(member.getUserPwd()));
-		log.info("Encoded password: " + member.getUserPwd());
+		log.info("after encode : " + member.getUserPwd() + ", length : " + member.getUserPwd().length());
 
-		// 기본값 설정
-		if (member.getAdminYN() == null) member.setAdminYN("Y");
-		if (member.getLoginOk() == null) member.setLoginOk("Y");
-		if (member.getSignType() == null) member.setSignType("direct");
-
-		// 파일 저장 경로 지정
+		// 회원가입시 사진 파일첨부가 있을 경우, 저장 폴더 경로 지정 -----------------------------------
 		String savePath = request.getSession().getServletContext().getRealPath("resources/photo_files");
-		log.info("File save path: " + savePath);
+		// 서버 엔진이 구동하는 웹에플리케이션(Context)의 루트(webapp) 아래의 "resources/photo_files" 까지의
+		// 경로 정보를 조회함
+		log.info("savePath : " + savePath);
 
-		// 파일 첨부 처리
+		// 첨부파일이 있다면
 		if (!mfile.isEmpty()) {
-			String originalFileName = mfile.getOriginalFilename();
-			String renamedFileName = member.getUserId() + "_" + originalFileName;
+			// 전송온 파일 이름 추출함
+			String fileName = mfile.getOriginalFilename();
+			// 여러 회원이 업로드한 사진파일명이 중복될 경우를 대비해서 저장파일명 이름바꾸기함
+			// 바꿀 파일이름은 개발자가 정함
+			// userId 가 기본키이므로 중복이 안됨 => userId_filename 저장형태로 정해봄
+			String renameFileName = member.getUserId() + "_" + fileName;
 
-			try {
-				mfile.transferTo(new File(savePath + "\\" + renamedFileName));
-				member.setPhotoFileName(renamedFileName);
-			} catch (Exception e) {
-				log.error("File upload failed", e);
-				model.addAttribute("message", "첨부파일 업로드 실패!");
-				return "common/error";
+			// 저장 폴더에 저장 처리
+			if (fileName != null && fileName.length() > 0) {
+				try {
+					// mfile.transferTo(new File(savePath + "\\" + fileName));
+					// 저장시 바뀐 이름으로 저장 처리함
+					mfile.transferTo(new File(savePath + "\\" + renameFileName));
+				} catch (Exception e) {
+					// 첨부파일 저장시 에러 발생
+					e.printStackTrace();
+					model.addAttribute("message", "첨부파일 업로드 실패!");
+					return "common/error";
+				}
 			}
-		}
 
-		// 회원가입 처리
-		if (memberService.insertMember(member) > 0) {
-			return "member/loginPage";  // 성공 시 로그인 페이지로 이동
-		} else {
+			// 파일 업로드 정상 처리되었다면
+			// member.setPhotoFileName(fileName); //db 저장시에는 원래 이름으로 기록함
+			member.setPhotoFileName(renameFileName); // db 저장시에는 변경된 이름으로 기록함
+		} // 첨부파일이 있을 때
+
+		//가입정보 추가 입력 처리
+		member.setLoginOk("Y");
+		member.setAdminYN("N");
+		member.setSignType("direct");
+		log.info("memberInsertMethod : " + member);
+
+		if (memberService.insertMember(member) > 0) { // 회원가입 성공시
+			return "member/loginPage";
+		} else { // 회원가입 실패시
 			model.addAttribute("message", "회원 가입 실패! 확인하고 다시 가입해 주세요.");
 			return "common/error";
 		}
 	}
-
 
 	// '내 정보 보기' 클릭시 회원 정보 조회 요청 처리용 메소드
 	// 컨트롤러에서 뷰리졸버로 리턴하는 타입은 String(뷰파일명), ModelAndView 를 사용할 수 있음
@@ -259,7 +280,10 @@ public class MemberController {
 			} // 첨부파일이 있을 때
 		} else { // 수정된 첨부파일과 원래 첨부파일명이 같은 경우 (폴더에 저장된 상태임)
 			member.setPhotoFileName(member.getUserId() + "_" + originalFileName);
-		} 
+		}
+
+		//마지막 수정날짜 저장 처리
+		member.setLastModified(new Date(System.currentTimeMillis()));
 
 		if (memberService.updateMember(member) > 0) { // 회원정보 수정 성공시
 			return "redirect:main.do";
@@ -380,29 +404,31 @@ public class MemberController {
 		case "id":			listCount = memberService.selectSearchUserIdCount(keyword);		break;
 		case "gender":		listCount = memberService.selectSearchGenderCount(keyword);		break;
 		case "age":		listCount = memberService.selectSearchAgeCount(Integer.parseInt(keyword));		break;
-		case "enrolldate":	listCount = memberService.selectSearchEnrollDateCount(search);		break;
+		case "enrolldate":	listCount = memberService.selectSearchEnrollDateCount(search.getBegin(), search.getEnd());		break;
 		case "loginok":		listCount = memberService.selectSearchLoginOKCount(keyword);		break;
 		}
 		
 		//페이징 계산 처리
 		Paging paging = new Paging(listCount, limit, currentPage, "msearch.do");
 		paging.calculate();
+
+		//JPA 가 제공하는 메소드에 필요한 Pageable 객체 생성함 ---------------------------------------
+		Pageable pageable = PageRequest.of(paging.getCurrentPage() - 1, paging.getLimit(),
+				Sort.by(Sort.Direction.DESC, "enrollDate"));
 		
 		//겸색별 목록 조회 요청
 		ArrayList<Member> list = null;
-		search.setStartRow(paging.getStartRow());
-		search.setEndRow(paging.getEndRow());
-		
+
 		switch(action) {
-		case "id":		search.setKeyword(keyword);
-					list = memberService.selectSearchUserId(search);		break;
-		case "gender":		search.setKeyword(keyword);
-					list = memberService.selectSearchGender(search);		break;
-		case "age":	search.setAge(Integer.parseInt(keyword));			
-					list = memberService.selectSearchAge(search);		break;
-		case "enrolldate":	list = memberService.selectSearchEnrollDate(search);		break;
-		case "loginok":		search.setKeyword(keyword);
-					list = memberService.selectSearchLoginOK(search);		break;
+		case "id":
+					list = memberService.selectSearchUserId(keyword, pageable);		break;
+		case "gender":
+					list = memberService.selectSearchGender(keyword, pageable);		break;
+		case "age":
+					list = memberService.selectSearchAge(Integer.parseInt(keyword), pageable);		break;
+		case "enrolldate":	list = memberService.selectSearchEnrollDate(search.getBegin(), search.getEnd(), pageable);		break;
+		case "loginok":
+					list = memberService.selectSearchLoginOK(keyword, pageable);		break;
 		}
 		
 		if(list != null && list.size() > 0) {

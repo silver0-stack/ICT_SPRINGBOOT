@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.myweb.first.notice.jpa.entity.NoticeEntity;
 
-import java.sql.Date;
+import java.util.Date;
 
 @Data  //@Getter, @Setter, @ToString, @Equals, @HashCode 오버라이딩 까지 자동 생성됨
 @AllArgsConstructor
@@ -16,15 +16,13 @@ public class Notice {
 	private int noticeNo;
 	@NotBlank
 	private String noticeTitle;
-	@JsonFormat(pattern="yyyy-MM-dd")
-	private Date noticeDate;
+	private java.sql.Date noticeDate;
 	private String noticeWriter;
 	private String noticeContent;
 	private String originalFilePath;
 	private String renameFilePath;
 	private String importance;
-	@JsonFormat(pattern="yyyy-MM-dd")
-	private Date impEndDate;
+	private java.sql.Date impEndDate;
 	private int readCount;
 
 	public NoticeEntity toEntity() {

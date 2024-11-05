@@ -24,9 +24,9 @@ public class Member {
 	private String phone;  //PHONE	VARCHAR2(13 BYTE)
 	private String email;   //EMAIL	VARCHAR2(30 BYTE)
 	@JsonFormat(pattern="yyyy-MM-dd")
-	private Date enrollDate;  //ENROLL_DATE	DATE
+	private java.sql.Date enrollDate;  //ENROLL_DATE	DATE
 	@JsonFormat(pattern="yyyy-MM-dd")
-	private Date lastModified;  //LASTMODIFIED	DATE
+	private java.sql.Date lastModified;  //LASTMODIFIED	DATE
 	private String signType;  //SIGNTYPE	VARCHAR2(10 BYTE)
 	private String adminYN;  //ADMIN_YN	CHAR(1 BYTE)
 	private String loginOk;  //LOGIN_OK	CHAR(1 BYTE)

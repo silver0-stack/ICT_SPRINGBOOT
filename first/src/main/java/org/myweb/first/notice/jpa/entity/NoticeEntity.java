@@ -10,7 +10,6 @@ import org.myweb.first.notice.model.dto.Notice;
 import java.sql.Date;
 import java.util.GregorianCalendar;
 
-
 //테이블 생성에 대한 가이드 클래스임
 //@Entity 어노테이션 반드시 표시함 => 설정정보에 자동 등록됨 => Repository 와 연결됨
 
@@ -22,6 +21,7 @@ import java.util.GregorianCalendar;
 @Entity     // JPA 가 관리함, DB 테이블과 DTO 클래스 매핑을 위해서 필요함
 public class NoticeEntity {
     @Id     //JPA 가 Entity 객체들을 관리할 때 식별할 아이디 생성 용도의 어노테이션임
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)  //테이블 자동으로 만들어지게 할 때, 기본키 지정에 사용함
     @Column(name = "NOTICENO", nullable = false)
     private int noticeNo;			//NOTICENO	NUMBER
     @Column(name = "NOTICETITLE", nullable = false)
@@ -45,7 +45,8 @@ public class NoticeEntity {
 
     @PrePersist     //jpa 로 넘어가기 전(sql 에 적용하기 전)에 작동된다는 어노테이션임
     public void prePersist(){
-        noticeDate = new java.sql.Date(new java.util.Date().getTime());
+        // 공지사항 중요도 종료날짜를 자동으로 등록날짜 기준 3일 뒤로 한다면
+        noticeDate = new java.sql.Date(System.currentTimeMillis() + (1000 * 60 * 60 * 24 * 3));  //현재 날짜 시간 적용
     }
 
     public Notice toDto() {

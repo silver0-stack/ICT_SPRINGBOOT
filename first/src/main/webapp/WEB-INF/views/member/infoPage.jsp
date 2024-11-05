@@ -71,6 +71,11 @@ function validate(){
 	<%-- 뷰페이지에서는 보이지 않으면서, 서버로 폼 안의 값들이 전송될 때 숨겨서 같이 보내야 하는 값 처리 --%>
 	<input type="hidden" name="originalUserPwd" value="${ requestScope.member.userPwd }">
 	<input type="hidden" name="ofile" value="${ requestScope.ofile }">
+	<input type="hidden" name="adminYN" value="${ member.adminYN}">
+	<input type="hidden" name="loginOk" value="${ member.loginOk}">
+	<input type="hidden" name="signType" value="${ member.signType}">
+	<input type="hidden" name="enrollDate" value="${ member.enrollDate}">
+
 <table id="outer" align="center" width="700" cellspacing="5" cellpadding="0">
 	<tr><th colspan="2">등록된 회원님의 정보는 아래와 같습니다.<br>
 		수정할 내용이 있으면 변경하고, 수정하기 버튼을 누르세요.

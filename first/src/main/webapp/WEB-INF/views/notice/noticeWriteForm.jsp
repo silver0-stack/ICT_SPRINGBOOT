@@ -7,6 +7,11 @@
 <head>
 <meta charset="UTF-8">
 <title>first</title>
+<script type="text/javascript">
+	window.onload = function (){
+		document.getElementById('impEndDate').value=new Date().toISOString().substring(0, 10);
+	};
+</script>
 </head>
 <body>
 <c:import url="/WEB-INF/views/common/menubar.jsp" />
@@ -31,7 +36,7 @@
 		</td></tr>
 	<tr><th width="120">중요도 지정 종료 날짜</th>
 		<td>
-			<input type="date" name="impEndDate" >		
+			<input type="date" name="impEndDate" id="impEndDate">
 		</td></tr>
 	<tr><th>첨부파일</th>
 		<td>

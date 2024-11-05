@@ -11,30 +11,30 @@
 <body>
 <c:import url="/WEB-INF/views/common/menubar.jsp" />
 <hr>
-<h1 align="center">${ requestScope.bnum } 번 게시글 댓글 | 대댓글 등록 페이지</h1>
+<h1 align="center">${ requestScope.bnum } 번 게시글 댓글 등록 페이지</h1>
 <br>
 
 <!-- 댓글과 대댓글은 파일첨부 안 함 -->
 <form action="breply.do" method="post" >
-	<input type="hidden" name="bnum" value="${ requestScope.bnum }">
-	<input type="hidden" name="page" value="${ requestScope.currentPage }">
+	<input type="hidden" name="boardRef" value="${ requestScope.bnum }">
+	<input type="hidden" name="page" value="${ requestScope.page }">
 	
 <table id="outer" align="center" width="700" cellspacing="5" cellpadding="5">	
-	<tr><th width="120">제 목</th>
+	<tr><th width="120">댓글 제목</th>
 		<td>
-			<input type="text" name="boardTitle" size="50">			
+			<input type="text" name="replyTitle" size="50">
 		</td></tr>
-	<tr><th width="120">작성자</th>
+	<tr><th width="120">댓글 작성자</th>
 		<td>
-			<input type="text" name="boardWriter" readonly value="${ sessionScope.loginUser.userId }">			
+			<input type="text" name="replyWriter" readonly value="${ sessionScope.loginUser.userId }">
 		</td></tr>		
-	<tr><th>내 용</th>
-		<td><textarea rows="5" cols="50" name="boardContent"></textarea>
+	<tr><th>댓글 내용</th>
+		<td><textarea rows="5" cols="50" name="replyContent"></textarea>
 		</td></tr>
 	
 	<tr><th colspan="2">
-		<input type="submit" value="등록하기"> &nbsp; 
-		<input type="reset" value="작성취소"> &nbsp; 
+		<input type="submit" value="댓글 등록하기"> &nbsp;
+		<input type="reset" value="댓글 작성취소"> &nbsp;
 		<input type="button" value="목록" onclick="javascript:history.go(-1); return false;">
 	</th></tr>
 </table>

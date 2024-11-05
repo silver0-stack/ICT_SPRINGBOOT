@@ -3,6 +3,7 @@ package org.myweb.first.notice.controller;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.sql.Date;
 import java.util.ArrayList;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -186,9 +187,6 @@ public class NoticeController {
 		// 공지사항 첨부파일 저장 폴더를 경로 지정
 		String savePath = request.getSession().getServletContext().getRealPath("resources/notice_upfiles");
 
-		if(notice.getImportance() == null) {
-			notice.setImportance("N");
-		}
 		// 첨부파일이 있을 때
 		if (!mfile.isEmpty()) {
 			// 전송온 파일이름 추출함
@@ -217,6 +215,11 @@ public class NoticeController {
 			notice.setOriginalFilePath(fileName);
 			notice.setRenameFilePath(renameFileName);
 		} // 첨부파일이 있을 때
+
+		//중요도(importance) 가 null 일때 (체크되지 않았을 때)
+		if(notice.getImportance() == null){
+			notice.setImportance("N");
+		}
 
 		if (noticeService.insertNotice(notice) > 0) {
 			// 새 공지글 등록 성공시 목록 페이지 내보내기 요청
@@ -282,6 +285,9 @@ public class NoticeController {
 			notice.setImpEndDate(new java.sql.Date(System.currentTimeMillis())); // 오늘 날짜를 기본 날짜로 지정함
 		}
 
+		//수정 날짜도 변경
+		notice.setNoticeDate(new Date(System.currentTimeMillis()));
+
 		// 첨부파일 관련 변경 사항 처리
 		// 공지사항 첨부파일 저장 폴더 경로 지정
 		String savePath = request.getSession().getServletContext().getRealPath("resources/notice_upfiles");
@@ -306,7 +312,7 @@ public class NoticeController {
 
 			// 저장폴더에는 변경된 이름을 저장 처리함
 			// 파일 이름바꾸기함 : 년월일시분초.확장자
-			if (fileName != null && !fileName.isEmpty()) {
+			if (fileName != null && fileName.length() > 0) {
 				// 바꿀 파일명에 대한 문자열 만들기
 				renameFileName = FileNameChange.change(fileName, "yyyyMMddHHmmss");
 				// 바뀐 파일명 확인
@@ -361,15 +367,12 @@ public class NoticeController {
 		Paging paging = new Paging(listCount, limit, currentPage, "nsearchTitle.do");
 		paging.calculate();
 
-		// 마이바티스 매퍼에서 사용되는 메소드는 Object 1개만 전달할 수 있음
-		// paging.startRow, paging.endRow + keyword 같이 전달해야 하므로 => 하나의 객체로 만들어야 함
-		Search search = new Search();
-		search.setKeyword(keyword);
-		search.setStartRow(paging.getStartRow());
-		search.setEndRow(paging.getEndRow());
+		//JPA 가 제공하는 메소드에 필요한 Pageable 객체 생성함 ---------------------------------------
+		Pageable pageable = PageRequest.of(paging.getCurrentPage() - 1, paging.getLimit(),
+				Sort.by(Sort.Direction.DESC, "noticeNo"));
 
 		// 서비스롤 목록 조회 요청하고 결과 받기
-		ArrayList<Notice> list = noticeService.selectSearchTitle(search);
+		ArrayList<Notice> list = noticeService.selectSearchTitle(keyword, pageable);
 
 		if (list != null && list.size() > 0) {
 			mv.addObject("list", list);
@@ -413,15 +416,12 @@ public class NoticeController {
 		Paging paging = new Paging(listCount, limit, currentPage, "nsearchContent.do");
 		paging.calculate();
 
-		// 마이바티스 매퍼에서 사용되는 메소드는 Object 1개만 전달할 수 있음
-		// paging.startRow, paging.endRow + keyword 같이 전달해야 하므로 => 하나의 객체로 만들어야 함
-		Search search = new Search();
-		search.setKeyword(keyword);
-		search.setStartRow(paging.getStartRow());
-		search.setEndRow(paging.getEndRow());
+		//JPA 가 제공하는 메소드에 필요한 Pageable 객체 생성함 ---------------------------------------
+		Pageable pageable = PageRequest.of(paging.getCurrentPage() - 1, paging.getLimit(),
+				Sort.by(Sort.Direction.DESC, "noticeNo"));
 
 		// 서비스롤 목록 조회 요청하고 결과 받기
-		ArrayList<Notice> list = noticeService.selectSearchContent(search);
+		ArrayList<Notice> list = noticeService.selectSearchContent(keyword, pageable);
 
 		if (list != null && list.size() > 0) {
 			mv.addObject("list", list);
@@ -467,13 +467,12 @@ public class NoticeController {
 		Paging paging = new Paging(listCount, limit, currentPage, "nsearchDate.do");
 		paging.calculate();
 
-		// 마이바티스 매퍼에서 사용되는 메소드는 Object 1개만 전달할 수 있음
-		// paging.startRow, paging.endRow + search.begin, search.end 같이 전달해야 하므로 => 하나의 객체로 만들어야 함		
-		search.setStartRow(paging.getStartRow());
-		search.setEndRow(paging.getEndRow());
+		//JPA 가 제공하는 메소드에 필요한 Pageable 객체 생성함 ---------------------------------------
+		Pageable pageable = PageRequest.of(paging.getCurrentPage() - 1, paging.getLimit(),
+				Sort.by(Sort.Direction.DESC, "noticeNo"));
 
 		// 서비스롤 목록 조회 요청하고 결과 받기
-		ArrayList<Notice> list = noticeService.selectSearchDate(search);
+		ArrayList<Notice> list = noticeService.selectSearchDate(search, pageable);
 
 		if (list != null && list.size() > 0) {
 			mv.addObject("list", list);
