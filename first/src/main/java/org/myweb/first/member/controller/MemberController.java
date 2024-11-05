@@ -6,12 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.myweb.first.common.ApiResponse;
 import org.myweb.first.common.LoginResponse;
 import org.myweb.first.common.Paging;
+import org.myweb.first.common.util.JwtUtil;
 import org.myweb.first.member.model.dto.Member;
 import org.myweb.first.member.model.dto.User;
 import org.myweb.first.member.model.service.MemberService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.ui.Model;
@@ -34,14 +36,14 @@ import java.util.Optional;
 
 @Slf4j
 @RestController
-@RequestMapping("/members")
-@CrossOrigin(origins = "*")
-@SessionAttributes("loginUser")  // 세션에 로그인한 회원 정보를 저장
+@RequestMapping("/api/members")
+@CrossOrigin(origins = "*") // 보안을 위해 필요한 대로 설정하기
 @RequiredArgsConstructor
 public class MemberController {
 
 	private final MemberService memberService;
-	private final BCryptPasswordEncoder bcryptPasswordEncoder;
+	private final JwtUtil jwtUtil;
+//	private final BCryptPasswordEncoder bcryptPasswordEncoder;
 
 	// 로그인 페이지 이동
 	@GetMapping("/loginPage")
@@ -64,27 +66,52 @@ public class MemberController {
 		// -> 컨트롤러에서 명시적으로 유도하겠음
 		Optional<Member> loginUser  = memberService.selectMember(user.getUserId());
 
-		if (loginUser.isPresent() && bcryptPasswordEncoder.matches(user.getUserPwd(), loginUser.get().getUserPwd())) {
-			session.setAttribute("loginUser", loginUser);
-			status.setComplete();
-			return "common/main";
+		if (loginUser.isPresent()
+				&& StringUtils.hasText(user.getUserPwd())
+		        && memberService.matchesPassword(user.getUserPwd(), loginUser.get().getUserPwd())) {
+
+			String token = jwtUtil.generateToken(user.getUserId());
+
+			LoginResponse loginResponse = LoginResponse.builder()
+					.token(token)
+					.member(loginUser.get())
+					.build();
+
+			ApiResponse<LoginResponse> response = ApiResponse.<LoginResponse>builder()
+					.success(true)
+					.message("로그인 성공")
+					.data(loginResponse)
+					.build();
+
+			return ResponseEntity.ok(response);
+			//return "common/main";
 		} else {
-			model.addAttribute("message", "로그인 실패! 아이디나 암호를 다시 확인하세요. 또는 로그인 제한된 회원입니다. 관리자에게 문의하세요.");
-			return "common/error";
+			ApiResponse<LoginResponse> response = ApiResponse.<LoginResponse>builder()
+					.success(false)
+					.message("로그인 실패! 아이디나 암호를 확인하세요.")
+					.build();
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//			return "common/error";
 		}
 	}
 
+
+	/*
+	로그아웃 처리
+	RESTful API에서는 클라이언트 측에서 JWT를 삭제함으로써 로그아웃을 처리한다.
+	따라서 서버 측에서는 별도의 로그아웃 엔드포인트가 필요하지 않는다.
+	하지만, 토큰 블랙리스트를 사용하는 경우 별도의 엔드포인트를 구현할 수 있다.
+	*/
 	// 로그아웃 처리
-	@GetMapping("/logout")
-	public String logoutMethod(Model model) {
-		// 세션 무효화는 스프링 시큐리티 등에서 처리하는 것이 일반적입니다.
-		// 여기서는 수동으로 처리하고 있습니다.
-		return "redirect:/main";
-	}
+//	@GetMapping("/logout")
+//	public String logoutMethod(Model model) {
+//		// 세션 무효화는 스프링 시큐리티 등에서 처리하는 것이 일반적입니다.
+//		// 여기서는 수동으로 처리하고 있습니다.
+//		return "redirect:/main";
+//	}
 
 	// ID 중복 검사
 	@PostMapping("/idchk")
-	@ResponseBody
 	public ResponseEntity<String> dupCheckIdMethod(@RequestParam("userid") String userId) {
 		int userIdCount = memberService.selectCheckId(userId);
 		String returnStr = userIdCount == 0 ? "ok" : "dup";
