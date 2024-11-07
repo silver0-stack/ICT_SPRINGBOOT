@@ -2,7 +2,7 @@ package org.myweb.first.common.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.SignatureAlgorithm;
-import lombok.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Jwts;
 
@@ -11,6 +11,8 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
+    /*잘못된 @Value 어노테이션 임포트
+    * Spring Framework의 @Value 어노테이션을 사용하여 application.properties */
     @Value("${jwt.secret}")
     private String SECRET_KEY;
 

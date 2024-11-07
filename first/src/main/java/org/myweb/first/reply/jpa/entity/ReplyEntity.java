@@ -1,14 +1,11 @@
-package org.myweb.first.board.jpa.entity;
+package org.myweb.first.reply.jpa.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.myweb.first.board.model.dto.Reply;
-
-import java.util.GregorianCalendar;
+import org.myweb.first.reply.model.dto.Reply;
 
 @Data    //@Getter, @Setter, @ToString, @EqualsAndHashCode, @RequiredArgsConstructor
 @AllArgsConstructor

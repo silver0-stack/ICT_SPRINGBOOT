@@ -1,11 +1,10 @@
-package org.myweb.first.board.jpa.repository;
+package org.myweb.first.reply.jpa.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
-import org.myweb.first.board.jpa.entity.QBoardEntity;
-import org.myweb.first.board.jpa.entity.QReplyEntity;
-import org.myweb.first.board.jpa.entity.ReplyEntity;
+import org.myweb.first.reply.jpa.entity.QReplyEntity;
+import org.myweb.first.reply.jpa.entity.ReplyEntity;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

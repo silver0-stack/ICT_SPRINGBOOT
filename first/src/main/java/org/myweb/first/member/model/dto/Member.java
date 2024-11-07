@@ -34,19 +34,19 @@ public class Member {
 	
 	public MemberEntity toEntity() {
 		return MemberEntity.builder()
-				.userId(userId)
-				.userPwd(userPwd)
-				.userName(userName)
-				.gender(gender)
-				.age(age)
-				.phone(phone)
-				.email(email)
-				.enrollDate(enrollDate)
-				.lastModified(lastModified)
-				.signType(signType)
-				.adminYN(adminYN)
-				.loginOk(loginOk)
-				.photoFileName(photoFileName)
+				.userId(this.userId)
+				.userPwd(this.userPwd)
+				.userName(this.userName)
+				.gender(this.gender)
+				.age(this.age)
+				.phone(this.phone)
+				.email(this.email)
+				.enrollDate(this.enrollDate)
+				.lastModified(this.lastModified)
+				.signType(this.signType)
+				.adminYN(this.adminYN)
+				.loginOk(this.loginOk)
+				.photoFileName(this.photoFileName)
 				.build();
 	}
 }

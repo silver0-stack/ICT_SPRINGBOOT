@@ -1,11 +1,11 @@
-package org.myweb.first.board.model.dto;
+package org.myweb.first.reply.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.myweb.first.board.jpa.entity.ReplyEntity;
+import org.myweb.first.reply.jpa.entity.ReplyEntity;
 
 @Data    //@Getter, @Setter, @ToString, @EqualsAndHashCode, @RequiredArgsConstructor
 @AllArgsConstructor

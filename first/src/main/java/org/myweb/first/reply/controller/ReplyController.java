@@ -1,9 +1,8 @@
-package org.myweb.first.board.controller;
+package org.myweb.first.reply.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.myweb.first.board.model.dto.Board;
-import org.myweb.first.board.model.dto.Reply;
-import org.myweb.first.board.model.service.ReplyService;
+import org.myweb.first.reply.model.dto.Reply;
+import org.myweb.first.reply.model.service.ReplyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

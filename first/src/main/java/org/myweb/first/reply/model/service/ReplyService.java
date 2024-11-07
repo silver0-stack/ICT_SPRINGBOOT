@@ -1,13 +1,12 @@
-package org.myweb.first.board.model.service;
+package org.myweb.first.reply.model.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.myweb.first.board.jpa.entity.ReplyEntity;
-import org.myweb.first.board.jpa.repository.BoardQueryRepository;
-import org.myweb.first.board.jpa.repository.ReplyQueryRepository;
-import org.myweb.first.board.jpa.repository.ReplyRepository;
-import org.myweb.first.board.model.dto.Board;
-import org.myweb.first.board.model.dto.Reply;
+import org.myweb.first.reply.jpa.entity.ReplyEntity;
+//import org.myweb.first.reply.jpa.repository.ReplyQueryRepository;
+import org.myweb.first.reply.jpa.repository.ReplyQueryRepository;
+import org.myweb.first.reply.jpa.repository.ReplyRepository;
+import org.myweb.first.reply.model.dto.Reply;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,8 +76,8 @@ public class ReplyService {
                 reply.setReplySeq(replyQueryRepository.findLastReplyReplySeq(
                         reply.getBoardRef(), reply.getReplyReplyRef(), reply.getReplyLev()) + 1);
             }
-        }        
-       
+        }
+
         return replyRepository.save(reply.toEntity());   //jpa 가 제공
     }
 

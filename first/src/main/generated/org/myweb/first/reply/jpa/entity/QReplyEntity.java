@@ -1,4 +1,4 @@
-package org.myweb.first.board.jpa.entity;
+package org.myweb.first.reply.jpa.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -15,7 +15,7 @@ import com.querydsl.core.types.Path;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QReplyEntity extends EntityPathBase<ReplyEntity> {
 
-    private static final long serialVersionUID = -139915637L;
+    private static final long serialVersionUID = 1984538119L;
 
     public static final QReplyEntity replyEntity = new QReplyEntity("replyEntity");
 
