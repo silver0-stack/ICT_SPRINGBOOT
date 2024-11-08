@@ -1,6 +1,7 @@
 package org.myweb.first.member.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,7 +9,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.myweb.first.member.jpa.entity.MemberEntity;
 
-import java.sql.Date;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Data  //@Getter, @Setter, @ToString, @Equals, @HashCode 오버라이딩 까지 자동 생성됨
 @AllArgsConstructor
@@ -31,7 +35,11 @@ public class Member {
 	private String adminYN;  //ADMIN_YN	CHAR(1 BYTE)
 	private String loginOk;  //LOGIN_OK	CHAR(1 BYTE)
 	private String photoFileName;  //PHOTO_FILENAME	VARCHAR2(100 BYTE)
-	
+	@Column(name = "roles")
+	@CollectionTable(name = "member_roles", joinColumns = @JoinColumn(name = "userId"))
+	@ElementCollection(fetch = FetchType.EAGER)
+	private Set<String> roles = new HashSet<>();
+
 	public MemberEntity toEntity() {
 		return MemberEntity.builder()
 				.userId(this.userId)

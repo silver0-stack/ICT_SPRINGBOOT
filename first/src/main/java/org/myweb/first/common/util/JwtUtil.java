@@ -1,31 +1,52 @@
 package org.myweb.first.common.util;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import io.jsonwebtoken.Jwts;
 
+import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
+import java.util.Set;
 
 @Component
 public class JwtUtil {
 
-    /*잘못된 @Value 어노테이션 임포트
-    * Spring Framework의 @Value 어노테이션을 사용하여 application.properties */
+    private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
+
     @Value("${jwt.secret}")
     private String SECRET_KEY;
 
     @Value("${jwt.expiration}")
-    private long EXPIRATION_TIME; //밀리초 단위
+    private long EXPIRATION_TIME; // 밀리초 단위
+
+    private Key key;
+
+    @PostConstruct
+    public void init() {
+        try {
+            byte[] decodedSecret = Base64.getDecoder().decode(SECRET_KEY);
+            this.key = Keys.hmacShaKeyFor(decodedSecret);
+            logger.info("JWT Secret Key initialized successfully.");
+            logger.info("JWT Expiration Time: {} ms", EXPIRATION_TIME);
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid Base64-encoded secret key", e);
+            throw e;
+        }
+    }
 
     // 토큰 생성
-    public String generateToken(String userId){
+    public String generateToken(String userId, Set<String> roles){
         return Jwts.builder()
                 .setSubject(userId)
+                .claim("roles", roles)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .signWith(key, SignatureAlgorithm.HS256) // 올바른 사용
                 .compact();
     }
 
@@ -35,37 +56,32 @@ public class JwtUtil {
     }
 
     // 토큰 유효성 검사
-    public boolean validateToken(String token){
-        try{
-            getClaims(token);
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(key) // 올바른 사용
+                    .build()
+                    .parseClaimsJws(token);
+            logger.debug("Token is valid.");
             return true;
-        }catch(Exception e){
+        } catch (JwtException ex) {
+            logger.error("JWT validation failed", ex);
             return false;
         }
     }
 
     // 클레임 추출
-    // TODO: 클레임이 뭔가요? 토큰을 가지고 있는 BODY?
     private Claims getClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
+        return Jwts.parserBuilder()
+                .setSigningKey(key) // 올바른 사용
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+    // 토큰에서 역할 추출
+    public Set<String> extractRoles(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("roles", Set.class);
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
