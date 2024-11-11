@@ -1,35 +1,24 @@
 package org.myweb.first.member.controller;
 
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.myweb.first.common.ApiResponse;
 import org.myweb.first.common.LoginResponse;
-import org.myweb.first.common.Paging;
 import org.myweb.first.common.util.JwtUtil;
 import org.myweb.first.member.model.dto.Member;
 import org.myweb.first.member.model.dto.MemberInfoDTO;
 import org.myweb.first.member.model.dto.User;
 import org.myweb.first.member.model.service.MemberService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -297,7 +286,7 @@ public class MemberController {
 
         // 기존 회원 정보 조회
         Optional<Member> existingMemberOpt = memberService.selectMember(userId);
-        if (!existingMemberOpt.isPresent()) {
+        if (existingMemberOpt.isEmpty()) {
             ApiResponse<Member> response = ApiResponse.<Member>builder()
                     .success(false)
                     .message("회원 정보가 존재하지 않습니다.")
