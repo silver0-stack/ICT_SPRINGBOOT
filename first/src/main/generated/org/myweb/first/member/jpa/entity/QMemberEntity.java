@@ -37,6 +37,8 @@ public class QMemberEntity extends EntityPathBase<MemberEntity> {
 
     public final StringPath photoFileName = createString("photoFileName");
 
+    public final StringPath roles = createString("roles");
+
     public final StringPath signType = createString("signType");
 
     public final StringPath userId = createString("userId");

@@ -35,10 +35,7 @@ public class Member {
 	private String adminYN;  //ADMIN_YN	CHAR(1 BYTE)
 	private String loginOk;  //LOGIN_OK	CHAR(1 BYTE)
 	private String photoFileName;  //PHOTO_FILENAME	VARCHAR2(100 BYTE)
-	@Column(name = "roles")
-	@CollectionTable(name = "member_roles", joinColumns = @JoinColumn(name = "userId"))
-	@ElementCollection(fetch = FetchType.EAGER)
-	private Set<String> roles = new HashSet<>();
+	private String roles;
 
 	public MemberEntity toEntity() {
 		return MemberEntity.builder()
@@ -55,6 +52,8 @@ public class Member {
 				.adminYN(this.adminYN)
 				.loginOk(this.loginOk)
 				.photoFileName(this.photoFileName)
+				// roles 필드 추가
+				.roles(this.roles)
 				.build();
 	}
 }

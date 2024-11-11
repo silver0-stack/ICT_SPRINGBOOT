@@ -8,6 +8,7 @@ import org.myweb.first.common.LoginResponse;
 import org.myweb.first.common.Paging;
 import org.myweb.first.common.util.JwtUtil;
 import org.myweb.first.member.model.dto.Member;
+import org.myweb.first.member.model.dto.MemberInfoDTO;
 import org.myweb.first.member.model.dto.User;
 import org.myweb.first.member.model.service.MemberService;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,7 +76,7 @@ public class MemberController {
                 && memberService.matchesPassword(user.getUserPwd(), loginUser.get().getUserPwd())) {
 
 
-            Set<String> roles = loginUser.get().getRoles();
+            String roles = loginUser.get().getRoles(); //roles 필드 가져오기
             log.debug("User roles: {}", roles);
             String token = jwtUtil.generateToken(user.getUserId(), roles);
 
@@ -197,9 +198,9 @@ public class MemberController {
 
         // 역할 할당
         if ("Y".equalsIgnoreCase(member.getAdminYN())) {
-            member.getRoles().add("ADMIN");
+            member.setRoles("ADMIN");
         } else {
-            member.getRoles().add("USER");
+            member.setRoles("USER");
         }
         log.info("Final member data: {}", member);
 
@@ -232,8 +233,10 @@ public class MemberController {
     }
 
     // '내 정보 보기' 처리
+    /* userPwd(비밀번호 해시)는 절대 클라이언트에 노출되어서는 안 됨, 데이터 유출 시 큰 보안 사고임
+    * 따라서 userPwd만 없는 새로운 MemberInfoDTO 클래스를 생성해서 반환함*/
     @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse<Member>> memberDetailMethod(@PathVariable("userId") String userId) {
+    public ResponseEntity<ApiResponse<MemberInfoDTO>> memberDetailMethod(@PathVariable("userId") String userId) {
         log.info("Fetching member info for userId: {}", userId);
 
         Optional<Member> memberOpt = memberService.selectMember(userId);
@@ -249,14 +252,30 @@ public class MemberController {
             }
             member.setPhotoFileName(originalFilename); // member DTO에 originalFileName 필드 추가 필요
 
-            ApiResponse<Member> response = ApiResponse.<Member>builder()
+            // MemberInfoDTO 로 변환
+            MemberInfoDTO memberInfoDTO = new MemberInfoDTO(
+                    member.getUserId(),
+                    member.getUserName(),
+                    member.getGender(),
+                    member.getAge(),
+                    member.getPhone(),
+                    member.getEmail(),
+                    member.getEnrollDate(),
+                    member.getLastModified(),
+                    member.getSignType(),
+                    member.getAdminYN(),
+                    member.getLoginOk(),
+                    member.getPhotoFileName(),
+                    member.getRoles()
+            );
+            ApiResponse<MemberInfoDTO> response = ApiResponse.<MemberInfoDTO>builder()
                     .success(true)
                     .message("회원 정보 조회 성공")
-                    .data(member)
+                    .data(memberInfoDTO)
                     .build();
             return ResponseEntity.ok(response);
         } else {
-            ApiResponse<Member> response = ApiResponse.<Member>builder()
+            ApiResponse<MemberInfoDTO> response = ApiResponse.<MemberInfoDTO>builder()
                     .success(false)
                     .message(userId + "에 대한 회원 정보 조회 실패!")
                     .build();
@@ -402,24 +421,6 @@ public class MemberController {
 
         return ResponseEntity.ok(response);
 
-//        int listCount = memberService.selectListCount();
-//        Paging paging = new Paging(listCount, limit, currentPage, "mlist.do");
-//        paging.calculate();
-//
-//        Pageable pageable = PageRequest.of(paging.getCurrentPage() - 1, paging.getLimit(),
-//                Sort.by(Sort.Direction.DESC, "enrollDate"));
-//
-//        List<Member> list = memberService.selectList(pageable);
-//
-//        if (!list.isEmpty()) {
-//            model.addAttribute("list", list);
-//            model.addAttribute("paging", paging);
-//            model.addAttribute("currentPage", currentPage);
-//            return "member/memberListView";
-//        } else {
-//            model.addAttribute("message", currentPage + " 페이지 회원 목록 조회 실패!");
-//            return "common/error";
-//        }
     }
 
     // 로그인 제한/허용 처리

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
-import java.util.Set;
 
 @Component
 public class JwtUtil {
@@ -40,7 +39,7 @@ public class JwtUtil {
     }
 
     // 토큰 생성
-    public String generateToken(String userId, Set<String> roles){
+    public String generateToken(String userId, String roles){
         return Jwts.builder()
                 .setSubject(userId)
                 .claim("roles", roles)
@@ -80,8 +79,8 @@ public class JwtUtil {
     }
 
     // 토큰에서 역할 추출
-    public Set<String> extractRoles(String token) {
+    public String extractRoles(String token) {
         Claims claims = getClaims(token);
-        return claims.get("roles", Set.class);
+        return claims.get("roles", String.class);
     }
 }

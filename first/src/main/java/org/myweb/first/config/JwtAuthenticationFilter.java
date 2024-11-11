@@ -20,7 +20,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.security.SignatureException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -37,6 +36,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        boolean shouldNotFilter = path.equals("/api/members/login") ||
+                path.equals("/api/members/enroll") ||
+                path.equals("/api/members/idchk");
+        // 현재 요청이 필터링에서 제외되고 있는지 확인할 수 있음
+        logger.debug("Request URI: {}, shouldNotFilter: {}", path, shouldNotFilter);
+        return shouldNotFilter;
+    }
+
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
@@ -49,15 +60,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt) && jwtUtil.validateToken(jwt)) {
                 String userId = jwtUtil.extractUserId(jwt);
-                Set<String> roles = jwtUtil.extractRoles(jwt);
+                String roles = jwtUtil.extractRoles(jwt);
 
                 logger.debug("Extracted UserId: {}", userId);
                 logger.debug("Extracted Roles: {}", roles);
 
                 if (StringUtils.hasText(userId) && roles != null && !roles.isEmpty()) {
-                    List<GrantedAuthority> authorities = roles.stream()
-                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role)) // ROLE_ 접두사 추가
-                            .collect(Collectors.toList());
+                    List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roles));// ROLE_ 접두사 추가
+
 
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userId, null, authorities);
@@ -104,7 +114,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+            return bearerToken.substring(7).trim();
         }
         return null;
     }

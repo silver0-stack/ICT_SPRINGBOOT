@@ -46,8 +46,8 @@ public class SecurityConfig {
                         }))
                 // 권한 룰 설정
                 .authorizeHttpRequests(authorize -> authorize
-                        // 로그인, 회원가입, ID 체크 엔드포인트는 모두 허용
-                        .requestMatchers("/api/members/login", "/api/members/enroll", "/api/members/idchk").permitAll()
+                        // 로그인, 회원가입, ID 체크 엔드포인트은 모두 허용
+                        .requestMatchers("/api/members/login", "/api/members/enroll", "/api/members/idchk", "/api/members/{userId}").permitAll()
                         // GET /api/members/** 엔드포인트는 ROLE_USER 또는 ROLE_ADMIN에게 허용
                         .requestMatchers(HttpMethod.GET, "/api/members/**").hasAnyRole("USER", "ADMIN")
                         // 그 외의 /api/members/** 엔드포인트는 ROLE_ADMIN에게만 허용

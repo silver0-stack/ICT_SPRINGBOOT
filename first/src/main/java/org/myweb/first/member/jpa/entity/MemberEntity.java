@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import org.myweb.first.member.model.dto.Member;
 
 import java.sql.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -43,6 +45,9 @@ public class MemberEntity {
     private String loginOk;  //LOGIN_OK	CHAR(1 BYTE)
     @Column(name = "PHOTO_FILENAME")
     private String photoFileName;  //PHOTO_FILENAME	VARCHAR2(100 BYTE)
+    @Column(name = "ROLES")
+    private String roles;
+
 
     @PrePersist     //jpa 로 넘어가기 전(sql 에 적용하기 전)에 작동된다는 어노테이션임
     public void prePersist(){
@@ -66,6 +71,7 @@ public class MemberEntity {
                 .adminYN(adminYN)
                 .loginOk(loginOk)
                 .photoFileName(photoFileName)
+                .roles(roles)
                 .build();
     }
 }
