@@ -32,13 +32,14 @@ public class SecurityConfig {
                 // CSRF 비활성화 (REST API에서는 일반적으로 필요 없음)
                 .csrf(csrf -> csrf.disable())
                 // 세션 관리: STATELESS 설정 (JWT 기반 인증이므로 서버에서 세션 관리 안 함)
+                // 모든 요청은 독립적으로 처리한다
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // CORS 설정
                 .cors(cors -> cors
                         .configurationSource(request -> {
                             var corsConfig = new org.springframework.web.cors.CorsConfiguration();
-                            corsConfig.setAllowedOrigins(List.of("*")); // 보안상 특정 도메인으로 제한 권장
+                            corsConfig.setAllowedOrigins(List.of("*")); // 모든 도메인 허용하지만 나중엔 특정 도메인 허용(리액트 주소) 등으로 보안 처리해야 함
                             corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                             corsConfig.setAllowedHeaders(List.of("*"));
                             corsConfig.setAllowCredentials(false);
@@ -55,7 +56,7 @@ public class SecurityConfig {
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
-                // JWT 필터 추가
+                // JWT 필터 추가: Spring Security의 기본 인증 필터 전에 JwtAuthenticationFilter를 실행한다.
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

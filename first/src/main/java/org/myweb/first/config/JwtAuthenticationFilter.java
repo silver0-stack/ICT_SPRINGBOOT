@@ -22,9 +22,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
+
+/*
+ * 클라이언트 요청의 헤더에서 JWT 을 가져와 검증한다
+ * JWT가 유효하면 SecurityContextHolder에 인증 정보를 저장
+ * */
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
@@ -47,6 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
 
+    /* 요청마다 JWT 유효성 검사*/
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -58,7 +62,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
             logger.debug("Extracted JWT Token: {}", jwt);
 
+            /* 서명 및 만료 시간 확인해서 유효한 토큰인지 검증 */
             if (StringUtils.hasText(jwt) && jwtUtil.validateToken(jwt)) {
+                // JWT에서 사용자 ID 및 권한 추출
                 String userId = jwtUtil.extractUserId(jwt);
                 String roles = jwtUtil.extractRoles(jwt);
 
@@ -66,6 +72,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.debug("Extracted Roles: {}", roles);
 
                 if (StringUtils.hasText(userId) && roles != null && !roles.isEmpty()) {
+                    // JWT claims에 ROLE_ 접두사가 있어야만 SecurityContextHolder에 인증 정보를 저장할 수 있음
                     List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roles));// ROLE_ 접두사 추가
 
 
@@ -74,6 +81,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
+                    // SecurityContextHolder에 UsernamePasswordAuthenticationToken 저장
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     logger.debug("User authenticated: {}", userId);
                 } else {
@@ -111,6 +119,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+
+    /* Authorization 헤더에서 JWT 추출 */
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {

@@ -38,15 +38,21 @@ public class JwtUtil {
         }
     }
 
-    // 토큰 생성
+    /* JWT 발급(로그인)
+    JwtUtil.generateToken(String userId, String roles)
+    사용자가 로그인하면, JWT를 생성하여 반환한다.
+    입력값: 사용자ID, 권한 정보
+    예시:
+    eyJhbGciOiJIUzI1NiJ9(헤더).eyJzdWIiOiJ1c2VySWQiLCJyb2xlcyI6IlVTRVIiLCJpYXQiOjE2ODkxNjIwMDAsImV4cCI6MTY4OTI0ODQwMH0(페이로드).4i6lzsl1DqxKYeaB7kzw_RPbGtWlCsaihlS9ILHbNgc(서명)
+    */
     public String generateToken(String userId, String roles){
         return Jwts.builder()
-                .setSubject(userId)
-                .claim("roles", roles)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(key, SignatureAlgorithm.HS256) // 올바른 사용
-                .compact();
+                .setSubject(userId) // 사용자 ID
+                .claim("roles", roles) // 사용자 권한
+                .setIssuedAt(new Date()) // 생성 시점
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // 만료 시점
+                .signWith(key, SignatureAlgorithm.HS256) // 서명
+                .compact(); // JWT 생성
     }
 
     // 토큰에서 사용자 ID 추출
@@ -55,6 +61,7 @@ public class JwtUtil {
     }
 
     // 토큰 유효성 검사
+    /*서명 및 만료시간 확인*/
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
