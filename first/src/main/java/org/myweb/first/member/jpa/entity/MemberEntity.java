@@ -11,12 +11,15 @@ import java.sql.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
+/*회원 엔터티 클래스 (DB 테이블과 매핑)*/
+
+
+@Data  // Lombok을 이용한 Getter, Setter, ToString, Equals, HashCode 자동 생성
+@AllArgsConstructor  // 모든 필드를 인자로 받는 생성자 생성
+@NoArgsConstructor  // 기본 생성자 생성
+@Builder  // 빌더 패턴 지원
 @Table(name = "MEMBER") //매핑할 테이블 이름 지정함, NOTICE 테이블을 자동으로 만들어 주기도 하는 어노테이션임
-@Entity
+@Entity //JPA 엔터티로 등록
 public class MemberEntity {
     @Id
     @Column(name = "USERID", nullable = false)
@@ -49,13 +52,22 @@ public class MemberEntity {
     private String roles;
 
 
+    /*
+    * 엔터티가 저장되기 전에 실행되는 메소드
+    * @PrePersist 어노테이션을 통해 엔터티가 저장되기 전 자동으로 호출됨
+    * */
+
     @PrePersist     //jpa 로 넘어가기 전(sql 에 적용하기 전)에 작동된다는 어노테이션임
     public void prePersist(){
-        //insert 문 실행시 주로 사용됨
+        // 가입일과 최종 수정일을 현재 시간으로 설정
         enrollDate = new Date(System.currentTimeMillis());  //현재 날짜 시간 적용
         lastModified = new Date(System.currentTimeMillis());  //현재 날짜 시간 적용
     }
 
+    /*
+    * 엔터티를 DTO로 변환하는 메소드
+    * @return 회원 정보 DTO
+    * */
     public Member toDto(){
         return Member.builder()
                 .userId(userId)

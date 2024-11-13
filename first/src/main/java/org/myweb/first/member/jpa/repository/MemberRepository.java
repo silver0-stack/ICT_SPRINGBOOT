@@ -11,6 +11,8 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+/*회원 엔터티에 대한 JPA 리포지토리 인터페이스
+* 기본적인 CURD 작업을 제공하며, 복잡한 쿼리는 MemberQueryRepository에서 처리*/
 @Repository
 public interface MemberRepository extends JpaRepository<MemberEntity, String>, QuerydslPredicateExecutor<MemberEntity> {
     // 이제 @Query 메소드가 제거되었습니다
