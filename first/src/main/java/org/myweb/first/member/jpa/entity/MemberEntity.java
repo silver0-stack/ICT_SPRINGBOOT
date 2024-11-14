@@ -61,7 +61,7 @@ public class MemberEntity {
     public void prePersist(){
         // 가입일과 최종 수정일을 현재 시간으로 설정
         enrollDate = new Date(System.currentTimeMillis());  //현재 날짜 시간 적용
-        lastModified = new Date(System.currentTimeMillis());  //현재 날짜 시간 적용
+        lastModified = new Date(System.currentTimeMillis());  //현재 날짜 시간 적용                                                                                                                                                                                                                                            h
     }
 
     /*
