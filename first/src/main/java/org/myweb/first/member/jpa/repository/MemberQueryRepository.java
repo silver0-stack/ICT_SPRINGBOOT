@@ -24,9 +24,9 @@ import java.util.List;
 @Repository
 @RequiredArgsConstructor // final 필드를 인자로 받는 생성자 생성
 public class MemberQueryRepository {
-    private final JPAQueryFactory queryFactory; // QueryDSL을 위한 JPAQueryFactory
+    private final JPAQueryFactory queryFactory; // 동적 쿼리 생성
 
-    private final QMemberEntity member = QMemberEntity.memberEntity; // QueryDSL Q 클래스 인스턴스
+    private final QMemberEntity member = QMemberEntity.memberEntity; // QueryDSL의 Q 클래스 (메타데이터 클래스)로, 컴파일 타임에 생성됨
 
     /*
     조건을 생성하는 BooleanExpression 메소드를 추가하여 코드의 재사용성과 가독성을 향상시킴
@@ -89,10 +89,13 @@ public class MemberQueryRepository {
                 .where(condition)
                 .fetch().size();
 
+        // Page<MemberEntity> 객체 생성
         return new PageImpl<>(results, pageable, total); //페이징된 결과 반환
     }
 
 
+    // 검색 조건을 동적으로 생성
+    // BooleanExpression을 반환하여 where절에 적용
     private BooleanExpression getCondition(String action, String keyword, Date begin, Date end) {
         return switch (action) {
             case "id" -> userIdContains(keyword);

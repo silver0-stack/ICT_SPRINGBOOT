@@ -119,6 +119,7 @@ public class MemberService {
     * */
 
     public Page<Member> getAllMembers(Pageable pageable){
+        /*findAll(Pageable pageable)은 Spring Data JPA에서 제공하는 메소드로 페이징된 모든 데이터를 조회*/
     return memberRepository.findAll(pageable)
             .map(MemberEntity::toDto); // 엔터티를 DTO로 변환하여 반환
     }
@@ -138,6 +139,7 @@ public class MemberService {
         Date end = null;
 
         // enrollDate 기준 검색일 경우 날짜 변환
+        /*action이 enrollDaate이고 beginStr과 endStr이 존재하면 String을 Date로 변환*/
         if("enrollDate".equals(action)&& StringUtils.hasText(beginStr)&&
         StringUtils.hasText(endStr)){
             begin=Date.valueOf(beginStr);

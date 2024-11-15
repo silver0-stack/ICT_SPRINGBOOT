@@ -429,7 +429,7 @@ public class MemberController {
     /**
      * 회원 목록 조회 메소드 (관리자용)
      * @param currentPage 현재 페이지 번호 (기본값: 1)
-     * @param limit 페이지당 회원 수 (기본값: 10)
+     * @param limit 페이지당 항목 수(회원 수) (기본값: 10)
      * @param sort 정렬 기준 (기본값: enrollDate,desc)
      * @return 회원 목록 응답
      */
@@ -445,17 +445,27 @@ public class MemberController {
         Sort.Direction direction = Sort.Direction.DESC; //기본 정렬 방향: 내림차순
         String sortBy = "enrollDate"; // 기본 정렬 필드: 가입일
 
+        /*
+        * sort 배열의 첫 번째 요소는 정렬할 필드(enrollDate)
+        *             두 번째 요소는 정렬 방향(desc 또는 asc)
+        */
         if (sort.length == 2) {
             sortBy = sort[0]; // 정렬 기준 필드
             direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC; // 정렬 방향 설정
         }
 
         // Pageable 객체 생성
+        // PageRequest는 0부터 페이지 번호를 시작하므로, 클라이언트에서 1부터 시작하는 페이지 번호를 0부터로 변환
         Pageable pageable = PageRequest.of(currentPage - 1, limit, Sort.by(direction, sortBy));
         // 전체 회원 조회
+        /*
+         * 서비스 호출 및 Page 객체 반환
+         * Page<Member>는 페이징된 회원 목록과 메타데이터를 포함
+         */
         Page<Member> pageResult = memberService.getAllMembers(pageable);
 
         // API 응답 생성
+        /*클라이언트는 Page<Member> 객체를 통해 데이터 리스트와 페이징 정보를 받을 수 있음*/
         ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
                 .success(true)
                 .message("회원 목록 조회 성공")
@@ -540,12 +550,16 @@ public class MemberController {
             direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC; // 정렬 방향 설정
         }
 
-        // Pageable 객체 생성
+        // Pageable 객체 생성: 페이징 및 정렬 설정
         Pageable pageable = PageRequest.of(currentPage - 1, limit, Sort.by(direction, sortBy));
 
         // 검색 결과 조회
+        /*서비스 호출 및 Page 객체 반환
+        * searchMembers 메소드는 검색 조건에 따라 필터링된 회원 목록을 페이징하여 반환
+        * */
         Page<Member> searchResult = memberService.searchMembers(action, keyword, beginStr, endStr, pageable);
 
+        // Page 객체의 hasContent() : 반환된 데이터 리스트가 있을 시 (boolean)
         if(searchResult.hasContent()){
             // 성공 응답 생성
             ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
@@ -560,7 +574,7 @@ public class MemberController {
                     .success(false)
                     .message("검색 결과가 존재하지 않습니다.")
                     .build();
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); // 실패 응답 반환
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); // 400 Not Found 반환
         }
 
 

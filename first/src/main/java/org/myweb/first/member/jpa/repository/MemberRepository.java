@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 
 /*
  * 회원 엔티티에 대한 JPA 리포지토리 인터페이스
- * 기본적인 CRUD 작업을 제공하며, 복잡한 쿼리는 MemberQueryRepository에서 처리
+ * CRUD, 페이징, 정렬 등의 기본 기능을 제공하며, 복잡한 쿼리는 MemberQueryRepository에서 처리
  */
 @Repository
 public interface MemberRepository extends JpaRepository<MemberEntity, String>, QuerydslPredicateExecutor<MemberEntity> {
@@ -21,6 +21,9 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String>, Q
     // 기본적인 CRUD 작업은 JpaRepository 에서 처리됩니다
     // 복잡한 쿼리는 MemberQueryRepository 에서 처리합니다.
 
+    /*
+    * findAll(Pageable pageable) 메소드를 통해 페이징된 데이터 조회
+    * */
 
     // 사용자 ID로 검색한 결과의 개수(Native Query 사용)
     @Query(value = "select count(*) from member m where m.userid like %:keyword%", nativeQuery = true)
