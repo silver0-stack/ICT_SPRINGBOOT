@@ -15,27 +15,32 @@ import java.util.Date;
 /**
  * JWT 생성 및 검증을 위한 유틸리티 클래스
  */
-@Component // 스프링 컴포넌트로 등록
+@Component // 스프링 컴포넌트로 등록: @Autowired를 사용하여 JwtUtil을 주입받을 수 있다
 public class JwtUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class); // 로깅을 위한 Logger
 
+    /* JWT 서명에 사용되는 비밀키를 외부 설정 파일에서 관리할 수 있게 함 */
     @Value("${jwt.secret}") // application.properties에서 jwt.secret 값 주입
     private String SECRET_KEY;
 
+    /* JWT 토큰의 만료시간을 외부 설정 파일에서 관리할 수 있게 함*/
     @Value("${jwt.expiration}") // application.properties에서 jwt.expiration 값 주입
     private long EXPIRATION_TIME; // 토큰 만료 시간(밀리초 단위)
 
+    /* 토큰의 유효성 검증 및 토큰 서명하는데 사용됨*/
     private Key key; // JWT 서명에 사용할 비밀키
 
     /**
-     * Bean 초기화 시 비밀키 디코딩 및 Key 객체 생성
+     * `SECRET_KEY`는 Base64로 인코딩된 비밀키다. 이를 Bean 초기화 시 디코딩 및 HMAC SHA 알고리즘의 Key 객체 생성
+     * @이 메소드는 스프링이 JwtUtil 빈을 생성한 후 자동으로 호출된다
+     * @빈 초기화 시 필요한 설정을 수행하는 데 사용된다.
      */
     @PostConstruct
     public void init() {
         try {
-            byte[] decodedSecret = Base64.getDecoder().decode(SECRET_KEY); //Base64로 인코딩된 비밀키 디코딩
-            this.key = Keys.hmacShaKeyFor(decodedSecret); // HMAX SHA 키 생성
+            byte[] decodedSecret = Base64.getDecoder().decode(SECRET_KEY); //Base64로 인코딩된 비밀키를 디코딩하여 원래의 바이트 배열로 변환한다
+            this.key = Keys.hmacShaKeyFor(decodedSecret); // HMAX SHA 알고리즘에 적합한 비밀키 생성
             logger.info("JWT Secret Key initialized successfully."); // 초기화 성공 로그
             logger.info("JWT Expiration Time: {} ms", EXPIRATION_TIME); // 만료 시간 로그
         } catch (IllegalArgumentException e) {
@@ -45,19 +50,19 @@ public class JwtUtil {
     }
 
     /**
-     * JWT 토큰 생성 메소드
+     * JWT 토큰 생성 메소드: 사용자 ID와 역할 정보를 포함
      * @param userId 사용자 ID
      * @param roles 사용자 역할
      * @return 생성된 JWT 토큰
      */
     public String generateToken(String userId, String roles) {
-        return Jwts.builder()
+        return Jwts.builder() // JWT 토큰 빌더 생성
                 .setSubject(userId) // 토큰의 주제 설정 (사용자 ID)
                 .claim("roles", roles) // 사용자 역할 클레임 추가
-                .setIssuedAt(new Date()) // 토큰 발급 시간 설정
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // 토큰 만료 시간 설정
-                .signWith(key, SignatureAlgorithm.HS256) // 비밀키와 알고리즘으로 서명
-                .compact(); // JWT 토큰 생성
+                .setIssuedAt(new Date()) // 토큰 발급 시간을 현재 시간으로 설정
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // 토큰 만료 시간 설정: 현재 시간 + 만료 시간(1일)
+                .signWith(key, SignatureAlgorithm.HS256) // 비밀키와 HMAC SHA-256 알고리즘으로 토큰에 사명하여 토큰의 무결성과 신뢰성을 보장한다.
+                .compact(); // JWT 토큰을 최종적을 생성하여 문자열 형태로 반환한다.
     }
 
     /**
@@ -77,10 +82,10 @@ public class JwtUtil {
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(key) // 서명 검증을 위한 비밀키 설정
+            Jwts.parserBuilder() // JWT 파서 빌더 생성
+                    .setSigningKey(key) // 토큰 서명을 검증하기 위한 비밀키를 설정
                     .build()
-                    .parseClaimsJws(token); // 토큰 파싱 및 검증
+                    .parseClaimsJws(token); // 토큰 파싱하고 서명 검증. 이 과정에서 토큰의 무결성, 유효 기간 등이 확인됨
             logger.debug("Token is valid."); // 유효한 토큰 로그
             return true; // 유효한 토큰
         } catch (JwtException ex) {
@@ -95,8 +100,8 @@ public class JwtUtil {
      * @return 클레임 정보
      */
     private Claims getClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key) // 서명 검증을 위한 비밀키 설정
+        return Jwts.parserBuilder() // JWT 파서 빌더 생성
+                .setSigningKey(key) // 토큰 서명 검증을 위한 비밀키 설정
                 .build()
                 .parseClaimsJws(token) //토큰 파싱 및 클레임 추출
                 .getBody(); // 클레임 반환

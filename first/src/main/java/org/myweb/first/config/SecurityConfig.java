@@ -36,7 +36,7 @@ public class SecurityConfig {
 
     /**
      * HTTP 보안 필터 체인 설정 메소드
-     * @param http HttpSecurity 객체
+     * @param http HttpSecurity 객체를 사용하여 보안 필터 체인을 설정한다.
      * @return SecurityFilterChain 객체
      * @throws Exception 예외 발생 시
      */
@@ -55,22 +55,22 @@ public class SecurityConfig {
                             var corsConfig = new org.springframework.web.cors.CorsConfiguration();
                             corsConfig.setAllowedOrigins(List.of("*")); // 모든 도메인 허용하지만 나중엔 특정 도메인 허용(리액트 주소) 등으로 보안 처리해야 함
                             corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                            corsConfig.setAllowedHeaders(List.of("*"));
-                            corsConfig.setAllowCredentials(false);
+                            corsConfig.setAllowedHeaders(List.of("*")); // 모든 헤더를 허용한다
+                            corsConfig.setAllowCredentials(false); // 클라이언트가 인증 정보를 포함한 요청을 보낼 수 없도록 설정한다.
                             return corsConfig;
                         }))
-                // 권한 룰 설정
+                // 권한 룰 설정: HTTP 요청에 대한 권한 규칙을 설정한다.
                 .authorizeHttpRequests(authorize -> authorize
-                        // 로그인, 회원가입, ID 체크 엔드포인트은 모두 허용
+                        // 로그인, 회원가입, ID 체크 엔드포인트에 대한 모든 요청 허용: 인증되지 않은 사용자도 접근할 수 있어야 함
                         .requestMatchers("/api/members/login", "/api/members/enroll", "/api/members/idchk", "/api/members/{userId}").permitAll()
                         // GET /api/members/** 엔드포인트는 ROLE_USER 또는 ROLE_ADMIN에게 허용
                         .requestMatchers(HttpMethod.GET, "/api/members/**").hasAnyRole("USER", "ADMIN")
-                        // 그 외의 /api/members/** 엔드포인트는 ROLE_ADMIN에게만 허용
+                        // 그 외의 /api/members/** 엔드포인트(POST, PUT, DELETE 등)는 ROLE_ADMIN에게만 허용
                         .requestMatchers("/api/members/**").hasRole("ADMIN")
-                        // 그 외 모든 요청은 인증된 사용자이기만 하면 접근 가능
+                        // 그 외 모든 명시하지 않은 요청은 인증된 사용자이기만 하면 접근 가능: 보안강화를 위해 기본적으로 모든 요청에 대해 인증 요구
                         .anyRequest().authenticated()
                 )
-                // JWT 필터 추가: Spring Security의 기본 인증 필터 전에 JwtAuthenticationFilter를 실행한다.
+                // JWT 필터 추가: Spring Security의 기본 인증 필터 전에 JwtAuthenticationFilter를 실행한다.: 인증 과정에서 JWT 토큰을 먼저 처리하게 됨
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         // 보안 필터 체인 빌드 후 반환
