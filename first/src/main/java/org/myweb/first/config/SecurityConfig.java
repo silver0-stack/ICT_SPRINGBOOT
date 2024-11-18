@@ -35,7 +35,7 @@ public class SecurityConfig {
     }
 
     /**
-     * 보안 필터 체인 설정 메소드
+     * HTTP 보안 필터 체인 설정 메소드
      * @param http HttpSecurity 객체
      * @return SecurityFilterChain 객체
      * @throws Exception 예외 발생 시
