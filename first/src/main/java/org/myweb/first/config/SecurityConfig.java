@@ -19,15 +19,15 @@ import java.util.List;
  * JWT 기반 인증을 구현하기 위해 보안 필터 체인 구성
  */
 @Configuration // 스프링 설정 클래스
-@EnableWebSecurity // 웹 보안 활성화
-@EnableMethodSecurity // 메소드 보안 활성화
+@EnableWebSecurity // 웹 보안 활성화: SpringSecurity의 기본 보안 설정을 활성화하고 추가적인 보안 구성을 할 수 있게함
+@EnableMethodSecurity // 메소드 수준의 보안을 활성화: 특정 메소드에 @PreAuthorize 같은 어노테이션 사용할 수 있게함
 public class SecurityConfig {
     @Autowired
-    private JwtUtil jwtUtil; // JWT 유틸리티 클래스 주입
+    private JwtUtil jwtUtil; // JWT 유틸리티 클래스(JWT 토큰을 생성하고 검증하는 유틸리티 클래스) 주입: JWT 기반 인증을 구현하는 데 사용된다.
 
     /**
-     * JWT 인증 필터 핀 등록
-     * @return JwtAuthenticationFilter 인스턴스
+     * JWT 인증 필터 핀 등록: 이 필터는 JWT 토큰을 검사하고 유효한 경우 인증 정보를 스프링 시큐리티 컨텍스트에 설정한다
+     * @return JwtAuthenticationFilter(커스텀 JWT 인증 필터) 인스턴스: JwtUtil을 사용하여 토큰을 검증하고 인증 정보를 설정한다.
      */
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
