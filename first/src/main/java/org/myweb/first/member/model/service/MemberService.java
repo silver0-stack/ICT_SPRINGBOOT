@@ -31,15 +31,6 @@ public class MemberService {
     private final MemberQueryRepository memberQueryRepository; // 복잡한 쿼리를 처리하는 리포지토리
     private final BCryptPasswordEncoder passwordEncoder; // 비밀번호 암호화 인코더
 
-
-//	private ArrayList<Member> toList(List<MemberEntity> entityList) {
-//		ArrayList<Member> list = new ArrayList<>();
-//		for (MemberEntity entity : entityList) {
-//			list.add(entity.toDto());
-//		}
-//		return list;
-//	}
-
     /*
     * 회원 가입 처리 메소드
     * @Param member 회원 정보 DTO

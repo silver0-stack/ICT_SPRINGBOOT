@@ -1,13 +1,10 @@
 package org.myweb.first.member.jpa.repository;
 
-import org.myweb.first.board.jpa.entity.BoardEntity;
 import org.myweb.first.member.jpa.entity.MemberEntity;
-import org.myweb.first.member.model.dto.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -16,7 +13,7 @@ import org.springframework.stereotype.Repository;
  * CRUD, 페이징, 정렬 등의 기본 기능을 제공하며, 복잡한 쿼리는 MemberQueryRepository에서 처리
  */
 @Repository
-public interface MemberRepository extends JpaRepository<MemberEntity, String>, QuerydslPredicateExecutor<MemberEntity> {
+public interface MemberRepository extends JpaRepository<MemberEntity, String>{
     // 이제 @Query 메소드가 제거되었습니다
     // 기본적인 CRUD 작업은 JpaRepository 에서 처리됩니다
     // 복잡한 쿼리는 MemberQueryRepository 에서 처리합니다.
@@ -44,6 +41,7 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String>, Q
     // 로그인 상태로 검색한 결과의 개수 (Native Query 사용)
     @Query(value = "select count(*) from member m where m.login_ok like %:keyword%", nativeQuery = true)
     Long countSearchLoginOK(@Param("keyword") String keyword);
+
 
     // 사용자 ID로 검색한 회원 목록 조회 (JPQL 사용)
     @Query(value = "select m from MemberEntity m where m.userId like %:keyword%",
