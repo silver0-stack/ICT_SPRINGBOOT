@@ -53,7 +53,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getServletPath(); // 요청 경로 추출
         boolean shouldNotFilter = path.equals("/api/members/login") ||
                 path.equals("/api/members/enroll") ||
-                path.equals("/api/members/idchk"); // 로그인, 회원가입, ID 체크 경로는 필터링에서 제외
+                path.equals("/api/members/idchk") ||
+                path.startsWith("/swagger-ui/") || // Swagger UI의 모든 정적 리소스(CSS, JS, 이미지) 제외
+                path.startsWith("/v3/api-docs/"); // OpenAPI 문서 제외;
         // 현재 요청이 필터링에서 제외되고 있는지 확인할 수 있음
         logger.debug("Request URI: {}, shouldNotFilter: {}", path, shouldNotFilter); // 필터링 여부 로그
         return shouldNotFilter; // 제외 여부 반환

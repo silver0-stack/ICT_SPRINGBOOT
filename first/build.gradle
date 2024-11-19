@@ -69,7 +69,13 @@ dependencies {
     // Spring HATEOAS 의존성 추가
     implementation 'org.springframework.boot:spring-boot-starter-hateoas'
 
-    //implementation 'org.springframework.data:spring-data-web'
+    // Springfox Swagger2
+//    implementation 'io.springfox:springfox-boot-starter:3.0.0'
+
+    // (옵션) Swagger UI를 위한 Webjars
+//    implementation 'org.webjars:swagger-ui:3.52.5'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
 }
 
 //sourceSets

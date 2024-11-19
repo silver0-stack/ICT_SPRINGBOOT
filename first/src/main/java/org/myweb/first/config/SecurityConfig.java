@@ -67,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/members/**").hasAnyRole("USER", "ADMIN")
                         // 그 외의 /api/members/** 엔드포인트(POST, PUT, DELETE 등)는 ROLE_ADMIN에게만 허용
                         .requestMatchers("/api/members/**").hasRole("ADMIN")
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger UI 접근 허용
                         // 그 외 모든 명시하지 않은 요청은 인증된 사용자이기만 하면 접근 가능: 보안강화를 위해 기본적으로 모든 요청에 대해 인증 요구
                         .anyRequest().authenticated()
                 )

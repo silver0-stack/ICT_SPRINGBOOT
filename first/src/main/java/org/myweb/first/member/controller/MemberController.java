@@ -1,5 +1,7 @@
 package org.myweb.first.member.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.myweb.first.common.ApiResponse;
@@ -37,6 +39,7 @@ import java.util.*;
 @RequestMapping("/api/members") // 기본 url 경로 설정
 @CrossOrigin(origins = "*") // CORS 설정 (보안을 위해 필요한 대로 설정하기)
 @RequiredArgsConstructor // final 필드를 인자로 받는 생성자 생성
+@Tag(name="멤버 컨트롤러 테스트", description="응답 api 테스트")
 public class MemberController {
 
     private final MemberService memberService; // 회원 서비스
@@ -51,6 +54,7 @@ public class MemberController {
     * @return 로그인 결과 응답
     * */
     @PostMapping("/login")
+    @Operation(summary = "로그인", description = "유저가 로그인 할 때 사용하는 API")
     public ResponseEntity<ApiResponse<LoginResponse>>  loginMethod(@RequestBody User user) {
         log.info("Login attempt: {}", user); // 로그인 시도 로그
 
@@ -112,6 +116,7 @@ public class MemberController {
      * @return 중복 상태 ("ok": 중복되지 않음, "dup": 중복됨)
      */
     @PostMapping("/idchk")
+    @Operation(summary = "ID 중복 체크", description = "유저가 id 중복체크 할 때 사용하는 API")
     public ResponseEntity<ApiResponse<String>> dupCheckIdMethod(@RequestParam("userid") String userId) {
         log.info("ID check for userId: {}", userId); // ID 체크 로그
 
@@ -136,6 +141,7 @@ public class MemberController {
      * @return 회원가입 결과 응답
      */
     @PostMapping("/enroll")
+    @Operation(summary = "회원가입", description = "유저가 회원가입 할 때 사용하는 API")
     public ResponseEntity<ApiResponse<Member>> memberInsertMethod(@ModelAttribute Member member,
                                                                   @RequestParam(name = "photofile", required = false) MultipartFile mfile) {
         log.info("Enrollment attempt: {}", member); //회원가입 시도 로그
@@ -243,6 +249,7 @@ public class MemberController {
     /* userPwd(비밀번호 해시)는 절대 클라이언트에 노출되어서는 안 됨, 데이터 유출 시 큰 보안 사고임
     * 따라서 userPwd만 없는 새로운 MemberInfoDTO 클래스를 생성해서 반환함*/
     @GetMapping("/{userId}")
+    @Operation(summary = "회원 조회", description = "유저가 로그인 후 회원 조회하는 API")
     public ResponseEntity<ApiResponse<MemberInfoDTO>> memberDetailMethod(@PathVariable("userId") String userId) {
         log.info("Fetching member info for userId: {}", userId); // 회원 정보 조회 시도 로그
 
@@ -304,6 +311,7 @@ public class MemberController {
      */
     // 회원 정보 수정 처리
     @PutMapping("/{userId}")
+    @Operation(summary = "회원 수정", description = "유저가 회원 정보 수정할 때 사용하는 API")
     public ResponseEntity<ApiResponse<Member>> memberUpdateMethod(@PathVariable("userId") String userId,
                                                                   @ModelAttribute Member member,
                                                                   @RequestParam(name = "photofile", required = false) MultipartFile mfile) {
@@ -403,6 +411,7 @@ public class MemberController {
      * @return 삭제 결과 응답
      */
     @DeleteMapping("/{userId}")
+    @Operation(summary = "회원 삭제", description = "회원 탈퇴할 때 사용하는 API")
     public ResponseEntity<ApiResponse<String>> memberDeleteMethod(@PathVariable("userId") String userId) {
         log.info("Deleting member with userId: {}", userId); // 회원 삭제 시도 로그
 
@@ -434,6 +443,7 @@ public class MemberController {
      * @return 회원 목록 응답
      */
     @GetMapping
+    @Operation(summary = "관리자의 회원목록 조회", description = "관리자가 회원의 목록을 조회할 때 사용하는 API")
     public ResponseEntity<ApiResponse<Page<Member>>> memberListMethod(
             @RequestParam(name = "page", defaultValue = "1") int currentPage,
             @RequestParam(name = "limit", defaultValue = "10") int limit,
@@ -483,6 +493,7 @@ public class MemberController {
      * @return 변경 결과 응답
      */
     @PutMapping("/{userId}/loginok")
+    @Operation(summary = "로그인 상태 변경", description = "관리자가 로그인 상태 제한/허용 상태 변경할 때 사용하는 API")
     public ResponseEntity<ApiResponse<Member>> changeLoginOKMethod(@RequestBody Member member, @PathVariable String userId) {
 
         log.info("Updating login OK for userId: {}", userId); // 로그인 제한/허용 상태 변경 로그
@@ -528,6 +539,7 @@ public class MemberController {
      * @return 검색 결과 응답
      */
     @GetMapping("/search")
+    @Operation(summary = "멤버 필터링", description = "관리자 용 회원 검색할 때 사용하는 API")
     public ResponseEntity<ApiResponse<Page<Member>>> memberSearchMethod(@RequestParam("action") String action,
                                                                         @RequestParam(value = "keyword", required = false) String keyword,
                                                                         @RequestParam(value = "begin", required = false) String beginStr,
