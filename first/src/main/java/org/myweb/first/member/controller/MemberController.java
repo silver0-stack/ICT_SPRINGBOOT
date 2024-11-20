@@ -12,6 +12,7 @@ import org.myweb.first.member.model.dto.MemberInfoDTO;
 import org.myweb.first.member.model.dto.RefreshTokenRequest;
 import org.myweb.first.member.model.dto.User;
 import org.myweb.first.member.model.service.MemberService;
+import org.myweb.first.member.model.service.RefreshTokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,6 +46,7 @@ public class MemberController {
 
     private final MemberService memberService; // 회원 서비스
     private final JwtUtil jwtUtil; // JWT 유틸리티 클래스
+    private final RefreshTokenService refreshTokenService;// Refresh Token 서비스 클래스
 
     @Value("${file.upload-dir}") // 파일 업로드 디렉토리 경로 주입
     private String uploadDir;
@@ -77,6 +79,8 @@ public class MemberController {
             //Refresh Token 생성
             String refreshToken=jwtUtil.generateRefreshToken(user.getUserId(), roles);
 
+            //Refresh Token 저장
+            refreshTokenService.storedRefreshToken(user.getUserId(), refreshToken);
             // 로그인 응답 DTO 생성
             LoginResponse loginResponse = LoginResponse.builder()
                     .accessToken(accessToken)
@@ -118,24 +122,28 @@ public class MemberController {
             String userId=jwtUtil.extractUserId(refreshToken);
             String roles=jwtUtil.extractRoles(refreshToken);
 
-            Optional<Member> memberOpt = memberService.selectMember(userId);
-            if(memberOpt.isPresent()){
-                String newAccessToken = jwtUtil.generateAccessToken(userId, roles);
+            // Refresh Token 검증
+            if(refreshTokenService.validateRefreshToken(userId, refreshToken)){
+                Optional<Member> memberOpt = memberService.selectMember(userId);
+                if(memberOpt.isPresent()){
+                    String newAccessToken = jwtUtil.generateAccessToken(userId, roles);
 
-                // 로그인 응답 dto 생성 (Refresh Token은 새로 발급하지 않음
-                LoginResponse loginRespons=LoginResponse.builder()
-                        .accessToken(newAccessToken)
-                        .refreshToken(refreshToken) // 기존 Refresh Token 유지
-                        .member(memberOpt.get())
-                        .build();
+                    // 로그인 응답 dto 생성 (Refresh Token은 새로 발급하지 않음
+                    LoginResponse loginRespons=LoginResponse.builder()
+                            .accessToken(newAccessToken)
+                            .refreshToken(refreshToken) // 기존 Refresh Token 유지
+                            .member(memberOpt.get())
+                            .build();
 
-                ApiResponse<LoginResponse> response=ApiResponse.<LoginResponse>builder()
-                        .success(true)
-                        .message("Access Token이 새로 발급되었습니다.")
-                        .data(loginRespons)
-                        .build();
+                    ApiResponse<LoginResponse> response=ApiResponse.<LoginResponse>builder()
+                            .success(true)
+                            .message("Access Token이 새로 발급되었습니다.")
+                            .data(loginRespons)
+                            .build();
 
-                return ResponseEntity.ok(response);
+                    return ResponseEntity.ok(response);
+                }
+
             }
         }
 
@@ -146,13 +154,26 @@ public class MemberController {
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
-	/*
-	로그아웃 처리
-	RESTful API에서는 클라이언트 측에서 JWT를 삭제함으로써 로그아웃을 처리한다.
-	따라서 서버 측에서는 별도의 로그아웃 엔드포인트가 필요하지 않는다.
-	하지만, 토큰 블랙리스트를 사용하는 경우 별도의 엔드포인트를 구현할 수 있다.
-	*/
 
+    /**
+     * 사용자 로그아웃 요청 처리
+     * @param userId 사용자 ID
+     * @return 로그아웃 결과 응답
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestParam String userId){
+        log.info("Logout attempt for user: {}", userId);
+
+        // Refresh Token 삭제
+        refreshTokenService.deleteRefreshToken(userId);
+
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .success(true)
+                .message("로그아웃 성공")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 
     /**
      * ID 중복 검사 메소드
