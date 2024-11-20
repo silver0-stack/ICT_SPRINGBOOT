@@ -13,6 +13,7 @@ import org.myweb.first.member.model.dto.Member;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LoginResponse {
-    private String token;
+    private String accessToken;
+    private String refreshToken;
     private Member member;
 }

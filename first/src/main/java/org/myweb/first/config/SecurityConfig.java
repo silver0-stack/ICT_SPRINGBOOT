@@ -53,7 +53,7 @@ public class SecurityConfig {
                 .cors(cors -> cors
                         .configurationSource(request -> {
                             var corsConfig = new org.springframework.web.cors.CorsConfiguration();
-                            corsConfig.setAllowedOrigins(List.of("*")); // 모든 도메인 허용하지만 나중엔 특정 도메인 허용(리액트 주소) 등으로 보안 처리해야 함
+                            corsConfig.setAllowedOrigins(List.of("http://localhost:3000")); // 실제 사용 도메인으로 제한
                             corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                             corsConfig.setAllowedHeaders(List.of("*")); // 모든 헤더를 허용한다
                             corsConfig.setAllowCredentials(false); // 클라이언트가 인증 정보를 포함한 요청을 보낼 수 없도록 설정한다.

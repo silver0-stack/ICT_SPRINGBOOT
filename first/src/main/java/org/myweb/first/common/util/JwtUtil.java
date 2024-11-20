@@ -24,9 +24,13 @@ public class JwtUtil {
     @Value("${jwt.secret}") // application.properties에서 jwt.secret 값 주입
     private String SECRET_KEY;
 
-    /* JWT 토큰의 만료시간을 외부 설정 파일에서 관리할 수 있게 함*/
-    @Value("${jwt.expiration}") // application.properties에서 jwt.expiration 값 주입
-    private long EXPIRATION_TIME; // 토큰 만료 시간(밀리초 단위)
+    /* Access Token의 만료시간을 외부 설정 파일에서 관리할 수 있게 함*/
+    @Value("${jwt.access-token.expiration}") // application.properties에서 jwt.expiration 값 주입
+    private long ACCESS_TOKEN_EXPIRATION_TIME; // Access Token 만료 시간(밀리초 단위)
+
+    /* Refresh Token의 만료시간을 외부 설정 파일에서 관리할 수 있게 함*/
+    @Value("${jwt.refresh-token.expiration}")
+    private long REFRESH_TOKEN_EXPIRATION_TIME; // Refresh Token 만료 시간
 
     /* 토큰의 유효성 검증 및 토큰 서명하는데 사용됨*/
     private Key key; // JWT 서명에 사용할 비밀키
@@ -42,7 +46,8 @@ public class JwtUtil {
             byte[] decodedSecret = Base64.getDecoder().decode(SECRET_KEY); //Base64로 인코딩된 비밀키를 디코딩하여 원래의 바이트 배열로 변환한다
             this.key = Keys.hmacShaKeyFor(decodedSecret); // HMAX SHA 알고리즘에 적합한 비밀키 생성
             logger.info("JWT Secret Key initialized successfully."); // 초기화 성공 로그
-            logger.info("JWT Expiration Time: {} ms", EXPIRATION_TIME); // 만료 시간 로그
+            logger.info("Access Token Expiration Time: {} ms", ACCESS_TOKEN_EXPIRATION_TIME); // Access Token 만료 시간 로그
+            logger.info("Refresh Token Expiration Time: {} ms", REFRESH_TOKEN_EXPIRATION_TIME); // Refresh Token 만료 시간 로그
         } catch (IllegalArgumentException e) {
             logger.error("Invalid Base64-encoded secret key", e); //비밀키 디코딩 오류 로그
             throw e; // 예외 재발생
@@ -50,20 +55,37 @@ public class JwtUtil {
     }
 
     /**
-     * JWT 토큰 생성 메소드: 사용자 ID와 역할 정보를 포함
+     * Access Token 생성 메소드: 사용자 ID와 역할 정보를 포함
      * @param userId 사용자 ID
      * @param roles 사용자 역할
      * @return 생성된 JWT 토큰
      */
-    public String generateToken(String userId, String roles) {
+    public String generateAccessToken(String userId, String roles) {
         return Jwts.builder() // JWT 토큰 빌더 생성
                 .setSubject(userId) // 토큰의 주제 설정 (사용자 ID)
                 .claim("roles", roles) // 사용자 역할 클레임 추가
                 .setIssuedAt(new Date()) // 토큰 발급 시간을 현재 시간으로 설정
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // 토큰 만료 시간 설정: 현재 시간 + 만료 시간(1일)
+                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_TIME)) // 토큰 만료 시간 설정: 현재 시간 + Access Token 만료 시간(1일)
                 .signWith(key, SignatureAlgorithm.HS256) // 비밀키와 HMAC SHA-256 알고리즘으로 토큰에 사명하여 토큰의 무결성과 신뢰성을 보장한다.
                 .compact(); // JWT 토큰을 최종적을 생성하여 문자열 형태로 반환한다.
     }
+
+    /**
+     * Refresh Token 생성 메소드: 사용자 ID와 역할 정보를 포함
+     * @param userId 사용자 ID
+     * @param roles 사용자 역할
+     * @return 생성된 Refresh Token
+     */
+    public String generateRefreshToken(String userId, String roles) {
+        return Jwts.builder()
+                .setSubject(userId) // 토큰의 주제 설정 (사용자 ID)
+                .claim("roles", roles) // 사용자 역할 클레임 추가
+                .setIssuedAt(new Date()) // 토큰 발급 시간을 현재 시간으로 설정
+                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION_TIME)) // Refresh Token 만료 시간 설정
+                .signWith(key, SignatureAlgorithm.HS256) // 비밀키와 HMAC SHA-256 알고리즘으로 토큰 서명
+                .compact(); // JWT 토큰을 최종적으로 생성하여 문자열 형태로 반환
+    }
+
 
     /**
      * 토큰에서 사용자 ID 추출 메소드

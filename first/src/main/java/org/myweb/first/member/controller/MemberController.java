@@ -9,6 +9,7 @@ import org.myweb.first.common.LoginResponse;
 import org.myweb.first.common.util.JwtUtil;
 import org.myweb.first.member.model.dto.Member;
 import org.myweb.first.member.model.dto.MemberInfoDTO;
+import org.myweb.first.member.model.dto.RefreshTokenRequest;
 import org.myweb.first.member.model.dto.User;
 import org.myweb.first.member.model.service.MemberService;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,15 +32,15 @@ import java.sql.Date;
 import java.util.*;
 
 /*
-* 회원 관련 REST API를 제공하는 컨트롤러 클래스
-* */
+ * 회원 관련 REST API를 제공하는 컨트롤러 클래스
+ * */
 
 @Slf4j //로깅을 위한 SLF4J LOGGER 생성
 @RestController // RESTful 컨트롤러로 등록
 @RequestMapping("/api/members") // 기본 url 경로 설정
 @CrossOrigin(origins = "*") // CORS 설정 (보안을 위해 필요한 대로 설정하기)
 @RequiredArgsConstructor // final 필드를 인자로 받는 생성자 생성
-@Tag(name="멤버 컨트롤러 테스트", description="응답 api 테스트")
+@Tag(name = "멤버 컨트롤러 테스트", description = "응답 api 테스트")
 public class MemberController {
 
     private final MemberService memberService; // 회원 서비스
@@ -49,13 +50,14 @@ public class MemberController {
     private String uploadDir;
 
     /**
-    * 로그인 처리 메소드
-    * @param user 로그인 요청 데이터 (User DTO)
-    * @return 로그인 결과 응답
-    * */
+     * 로그인 처리 메소드
+     *
+     * @param user 로그인 요청 데이터 (User DTO)
+     * @return 로그인 결과 응답
+     */
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "유저가 로그인 할 때 사용하는 API")
-    public ResponseEntity<ApiResponse<LoginResponse>>  loginMethod(@RequestBody User user) {
+    public ResponseEntity<ApiResponse<LoginResponse>> loginMethod(@RequestBody User user) {
         log.info("Login attempt: {}", user); // 로그인 시도 로그
 
         // Optinal<Member>를 반환하여 호출 측에서 명식적으로 처리하도록 유도하기로 했음
@@ -66,18 +68,19 @@ public class MemberController {
         if (loginUser.isPresent()
                 && StringUtils.hasText(user.getUserPwd())
                 && memberService.matchesPassword(user.getUserPwd(), loginUser.get().getUserPwd())) {
-
-
             String roles = loginUser.get().getRoles(); //roles 필드 가져오기
             log.debug("User roles: {}", roles);
 
-            // JWT 토근 생성 (사용자 ID와 역할 정보 포함)
-            String token = jwtUtil.generateToken(user.getUserId(), roles);
+            //Access Token 생성
+            String accessToken = jwtUtil.generateAccessToken(user.getUserId(), roles);
 
+            //Refresh Token 생성
+            String refreshToken=jwtUtil.generateRefreshToken(user.getUserId(), roles);
 
             // 로그인 응답 DTO 생성
             LoginResponse loginResponse = LoginResponse.builder()
-                    .token(token)
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
                     .member(loginUser.get())
                     .build();
 
@@ -100,6 +103,49 @@ public class MemberController {
     }
 
 
+    /**
+     * Refresh Token을 사용하여 새로운 Access Token 발급
+     *
+     * @param refreshTokenRequeset Refresh Token 요청 DTO
+     * @return 새로운 Access Token을 포함한 응답
+     */
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ApiResponse<LoginResponse>> refreshAccessToken(@RequestBody RefreshTokenRequest refreshTokenRequest){
+        String refreshToken=refreshTokenRequest.getRefreshToken();
+        log.info("Refresh Token received: {}", refreshToken);
+
+        if(StringUtils.hasText(refreshToken) && jwtUtil.validateToken(refreshToken)){
+            String userId=jwtUtil.extractUserId(refreshToken);
+            String roles=jwtUtil.extractRoles(refreshToken);
+
+            Optional<Member> memberOpt = memberService.selectMember(userId);
+            if(memberOpt.isPresent()){
+                String newAccessToken = jwtUtil.generateAccessToken(userId, roles);
+
+                // 로그인 응답 dto 생성 (Refresh Token은 새로 발급하지 않음
+                LoginResponse loginRespons=LoginResponse.builder()
+                        .accessToken(newAccessToken)
+                        .refreshToken(refreshToken) // 기존 Refresh Token 유지
+                        .member(memberOpt.get())
+                        .build();
+
+                ApiResponse<LoginResponse> response=ApiResponse.<LoginResponse>builder()
+                        .success(true)
+                        .message("Access Token이 새로 발급되었습니다.")
+                        .data(loginRespons)
+                        .build();
+
+                return ResponseEntity.ok(response);
+            }
+        }
+
+        // Refresh Token 검증 실패 또는 사용자 정보 없음
+        ApiResponse<LoginResponse> response = ApiResponse.<LoginResponse>builder()
+                .success(false)
+                .message("유효하지 않은 Refresh Token 입니다.")
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
 	/*
 	로그아웃 처리
 	RESTful API에서는 클라이언트 측에서 JWT를 삭제함으로써 로그아웃을 처리한다.
@@ -108,10 +154,9 @@ public class MemberController {
 	*/
 
 
-
-
     /**
      * ID 중복 검사 메소드
+     *
      * @param userId 사용자 ID
      * @return 중복 상태 ("ok": 중복되지 않음, "dup": 중복됨)
      */
@@ -136,8 +181,9 @@ public class MemberController {
 
     /**
      * 회원가입 처리 메소드
+     *
      * @param member 회원 정보 DTO (폼 데이터)
-     * @param mfile 프로필 사진 파일 (선택적)
+     * @param mfile  프로필 사진 파일 (선택적)
      * @return 회원가입 결과 응답
      */
     @PostMapping("/enroll")
@@ -197,7 +243,6 @@ public class MemberController {
         member.setSignType("direct"); // 가입 방식: direct
 
 
-
         // 역할 할당
         if ("Y".equalsIgnoreCase(member.getAdminYN())) {
             member.setRoles("ADMIN"); // 관리자 역할 설정
@@ -228,6 +273,7 @@ public class MemberController {
 
     /**
      * 파일 확장자 검증 메소드
+     *
      * @param fileName 파일 이름
      * @return 유효한 확장자 여부
      */
@@ -243,11 +289,12 @@ public class MemberController {
 
     /**
      * '내 정보 보기' 처리 메소드
+     *
      * @param userId 사용자 ID
      * @return 회원 정보 응답
      */
     /* userPwd(비밀번호 해시)는 절대 클라이언트에 노출되어서는 안 됨, 데이터 유출 시 큰 보안 사고임
-    * 따라서 userPwd만 없는 새로운 MemberInfoDTO 클래스를 생성해서 반환함*/
+     * 따라서 userPwd만 없는 새로운 MemberInfoDTO 클래스를 생성해서 반환함*/
     @GetMapping("/{userId}")
     @Operation(summary = "회원 조회", description = "유저가 로그인 후 회원 조회하는 API")
     public ResponseEntity<ApiResponse<MemberInfoDTO>> memberDetailMethod(@PathVariable("userId") String userId) {
@@ -304,9 +351,10 @@ public class MemberController {
 
     /**
      * 회원 정보 수정 처리 메소드
+     *
      * @param userId 사용자 ID
      * @param member 수정할 회원 정보 DTO
-     * @param mfile 프로필 사진 파일 (선택적)
+     * @param mfile  프로필 사진 파일 (선택적)
      * @return 수정 결과 응답
      */
     // 회원 정보 수정 처리
@@ -407,6 +455,7 @@ public class MemberController {
 
     /**
      * 회원 삭제 처리 메소드
+     *
      * @param userId 사용자 ID
      * @return 삭제 결과 응답
      */
@@ -437,9 +486,10 @@ public class MemberController {
 
     /**
      * 회원 목록 조회 메소드 (관리자용)
+     *
      * @param currentPage 현재 페이지 번호 (기본값: 1)
-     * @param limit 페이지당 항목 수(회원 수) (기본값: 10)
-     * @param sort 정렬 기준 (기본값: enrollDate,desc)
+     * @param limit       페이지당 항목 수(회원 수) (기본값: 10)
+     * @param sort        정렬 기준 (기본값: enrollDate,desc)
      * @return 회원 목록 응답
      */
     @GetMapping
@@ -456,9 +506,9 @@ public class MemberController {
         String sortBy = "enrollDate"; // 기본 정렬 필드: 가입일
 
         /*
-        * sort 배열의 첫 번째 요소는 정렬할 필드(enrollDate)
-        *             두 번째 요소는 정렬 방향(desc 또는 asc)
-        */
+         * sort 배열의 첫 번째 요소는 정렬할 필드(enrollDate)
+         *             두 번째 요소는 정렬 방향(desc 또는 asc)
+         */
         if (sort.length == 2) {
             sortBy = sort[0]; // 정렬 기준 필드
             direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC; // 정렬 방향 설정
@@ -488,6 +538,7 @@ public class MemberController {
 
     /**
      * 로그인 제한/허용 상태 변경 메소드
+     *
      * @param member 수정할 회원 정보 DTO
      * @param userId 사용자 ID
      * @return 변경 결과 응답
@@ -529,13 +580,14 @@ public class MemberController {
 
     /**
      * 관리자용 회원 검색 기능 메소드
-     * @param action 검색 기준 (id, gender, age, enrollDate, loginok)
-     * @param keyword 검색 키워드
-     * @param beginStr 검색 시작 날짜 (enrollDate 기준)
-     * @param endStr 검색 종료 날짜 (enrollDate 기준)
+     *
+     * @param action      검색 기준 (id, gender, age, enrollDate, loginok)
+     * @param keyword     검색 키워드
+     * @param beginStr    검색 시작 날짜 (enrollDate 기준)
+     * @param endStr      검색 종료 날짜 (enrollDate 기준)
      * @param currentPage 현재 페이지 번호 (기본값: 1)
-     * @param limit 페이지당 회원 수 (기본값: 10)
-     * @param sort 정렬 기준 (기본값: enrollDate,desc)
+     * @param limit       페이지당 회원 수 (기본값: 10)
+     * @param sort        정렬 기준 (기본값: enrollDate,desc)
      * @return 검색 결과 응답
      */
     @GetMapping("/search")
@@ -567,12 +619,12 @@ public class MemberController {
 
         // 검색 결과 조회
         /*서비스 호출 및 Page 객체 반환
-        * searchMembers 메소드는 검색 조건에 따라 필터링된 회원 목록을 페이징하여 반환
-        * */
+         * searchMembers 메소드는 검색 조건에 따라 필터링된 회원 목록을 페이징하여 반환
+         * */
         Page<Member> searchResult = memberService.searchMembers(action, keyword, beginStr, endStr, pageable);
 
         // Page 객체의 hasContent() : 반환된 데이터 리스트가 있을 시 (boolean)
-        if(searchResult.hasContent()){
+        if (searchResult.hasContent()) {
             // 성공 응답 생성
             ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
                     .success(true)
@@ -580,7 +632,7 @@ public class MemberController {
                     .data(searchResult)
                     .build();
             return ResponseEntity.ok(response); // 성공 응답 반환
-        }else{
+        } else {
             // 검색 결과 없음 응답 생성
             ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
                     .success(false)
