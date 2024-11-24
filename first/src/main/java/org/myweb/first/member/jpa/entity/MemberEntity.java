@@ -40,11 +40,11 @@ public class MemberEntity {
     private Date enrollDate;  //ENROLL_DATE	DATE
     @Column(name = "LASTMODIFIED", nullable = false)
     private Date lastModified;  //LASTMODIFIED	DATE
-    @Column(name = "SIGNTYPE", nullable = false, columnDefinition = "direct")
+    @Column(name = "SIGNTYPE", nullable = false)
     private String signType;  //SIGNTYPE	VARCHAR2(10 BYTE)
-    @Column(name = "ADMIN_YN", nullable = false, columnDefinition = "N")
+    @Column(name = "ADMIN_YN", nullable = false)
     private String adminYN;  //ADMIN_YN	CHAR(1 BYTE)
-    @Column(name = "LOGIN_OK", nullable = false, columnDefinition = "Y")
+    @Column(name = "LOGIN_OK", nullable = false)
     private String loginOk;  //LOGIN_OK	CHAR(1 BYTE)
     @Column(name = "PHOTO_FILENAME")
     private String photoFileName;  //PHOTO_FILENAME	VARCHAR2(100 BYTE)

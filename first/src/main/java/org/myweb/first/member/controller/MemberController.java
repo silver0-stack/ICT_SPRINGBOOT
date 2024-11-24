@@ -2,6 +2,7 @@ package org.myweb.first.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.myweb.first.common.ApiResponse;
@@ -14,6 +15,7 @@ import org.myweb.first.member.model.dto.User;
 import org.myweb.first.member.model.service.MemberService;
 import org.myweb.first.member.model.service.RefreshTokenService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +34,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Date;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /*
  * 회원 관련 REST API를 제공하는 컨트롤러 클래스
@@ -77,7 +81,7 @@ public class MemberController {
             String accessToken = jwtUtil.generateAccessToken(user.getUserId(), roles);
 
             //Refresh Token 생성
-            String refreshToken=jwtUtil.generateRefreshToken(user.getUserId(), roles);
+            String refreshToken = jwtUtil.generateRefreshToken(user.getUserId(), roles);
 
             //Refresh Token 저장
             refreshTokenService.storedRefreshToken(user.getUserId(), refreshToken);
@@ -114,28 +118,28 @@ public class MemberController {
      * @return 새로운 Access Token을 포함한 응답
      */
     @PostMapping("/refresh-token")
-    public ResponseEntity<ApiResponse<LoginResponse>> refreshAccessToken(@RequestBody RefreshTokenRequest refreshTokenRequest){
-        String refreshToken=refreshTokenRequest.getRefreshToken();
+    public ResponseEntity<ApiResponse<LoginResponse>> refreshAccessToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        String refreshToken = refreshTokenRequest.getRefreshToken();
         log.info("Refresh Token received: {}", refreshToken);
 
-        if(StringUtils.hasText(refreshToken) && jwtUtil.validateToken(refreshToken)){
-            String userId=jwtUtil.extractUserId(refreshToken);
-            String roles=jwtUtil.extractRoles(refreshToken);
+        if (StringUtils.hasText(refreshToken) && jwtUtil.validateToken(refreshToken)) {
+            String userId = jwtUtil.extractUserId(refreshToken);
+            String roles = jwtUtil.extractRoles(refreshToken);
 
             // Refresh Token 검증
-            if(refreshTokenService.validateRefreshToken(userId, refreshToken)){
+            if (refreshTokenService.validateRefreshToken(userId, refreshToken)) {
                 Optional<Member> memberOpt = memberService.selectMember(userId);
-                if(memberOpt.isPresent()){
+                if (memberOpt.isPresent()) {
                     String newAccessToken = jwtUtil.generateAccessToken(userId, roles);
 
                     // 로그인 응답 dto 생성 (Refresh Token은 새로 발급하지 않음
-                    LoginResponse loginRespons=LoginResponse.builder()
+                    LoginResponse loginRespons = LoginResponse.builder()
                             .accessToken(newAccessToken)
                             .refreshToken(refreshToken) // 기존 Refresh Token 유지
                             .member(memberOpt.get())
                             .build();
 
-                    ApiResponse<LoginResponse> response=ApiResponse.<LoginResponse>builder()
+                    ApiResponse<LoginResponse> response = ApiResponse.<LoginResponse>builder()
                             .success(true)
                             .message("Access Token이 새로 발급되었습니다.")
                             .data(loginRespons)
@@ -157,11 +161,12 @@ public class MemberController {
 
     /**
      * 사용자 로그아웃 요청 처리
+     *
      * @param userId 사용자 ID
      * @return 로그아웃 결과 응답
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@RequestParam String userId){
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestParam String userId) {
         log.info("Logout attempt for user: {}", userId);
 
         // Refresh Token 삭제
@@ -182,8 +187,7 @@ public class MemberController {
      * @return 중복 상태 ("ok": 중복되지 않음, "dup": 중복됨)
      */
     @PostMapping("/idchk")
-    @Operation(summary = "ID 중복 체크", description = "유저가 id 중복체크 할 때 사용하는 API")
-    public ResponseEntity<ApiResponse<String>> dupCheckIdMethod(@RequestParam("userid") String userId) {
+    public ResponseEntity<ApiResponse<String>> dupCheckIdMethod(@RequestParam("userId") String userId) {
         log.info("ID check for userId: {}", userId); // ID 체크 로그
 
         // ID 존재 여부 확인
@@ -208,9 +212,17 @@ public class MemberController {
      * @return 회원가입 결과 응답
      */
     @PostMapping("/enroll")
-    @Operation(summary = "회원가입", description = "유저가 회원가입 할 때 사용하는 API")
-    public ResponseEntity<ApiResponse<Member>> memberInsertMethod(@ModelAttribute Member member,
-                                                                  @RequestParam(name = "photofile", required = false) MultipartFile mfile) {
+    public ResponseEntity<ApiResponse<Member>> memberInsertMethod(@Valid @ModelAttribute Member member,
+                                                                  BindingResult bindingResult,
+                                                                  @RequestParam(name = "photoFile", required = false) MultipartFile mfile) {
+
+        if (bindingResult.hasErrors()) {
+            String errorMessage = bindingResult.getAllErrors().stream()
+                    .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                    .collect(Collectors.joining(", "));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<Member>builder().success(false).message(errorMessage).build()); // 오류 ���� 반환SA
+        }
         log.info("Enrollment attempt: {}", member); //회원가입 시도 로그
 
         // 비밀번호 암호화
@@ -383,7 +395,7 @@ public class MemberController {
     @Operation(summary = "회원 수정", description = "유저가 회원 정보 수정할 때 사용하는 API")
     public ResponseEntity<ApiResponse<Member>> memberUpdateMethod(@PathVariable("userId") String userId,
                                                                   @ModelAttribute Member member,
-                                                                  @RequestParam(name = "photofile", required = false) MultipartFile mfile) {
+                                                                  @RequestParam(name = "photoFile", required = false) MultipartFile mfile) {
         log.info("Member update attempt: {}", member); // 회원 정보 수정 시도 로그
 
         // 기존 회원 정보 조회

@@ -31,7 +31,7 @@ public class MemberService {
     private final MemberQueryRepository memberQueryRepository; // 복잡한 쿼리를 처리하는 리포지토리
     private final BCryptPasswordEncoder passwordEncoder; // 비밀번호 암호화 인코더
 
-    /*
+    /**
     * 회원 가입 처리 메소드
     * @Param member 회원 정보 DTO
     * @return 처리 결과 (1: 성공, 0: 실패)
@@ -40,7 +40,17 @@ public class MemberService {
     public int insertMember(Member member) {
         //save() -> 성공시 Entity, 실패시 null 리턴함, JPA 가 제공하는 메소드임
         try {
-            memberRepository.save(member.toEntity()).toDto();
+            MemberEntity memberEntity = member.toEntity();
+
+            // userId 확인
+            log.info("Saving MemberEntity with userId: {}", memberEntity.getUserId());
+
+
+            if (memberEntity.getUserId() == null || memberEntity.getUserId().trim().isEmpty()) {
+                throw new IllegalArgumentException("userId는 필수 입력 항목입니다.");
+            }
+
+            memberRepository.save(memberEntity);
             return 1;
         } catch (DataIntegrityViolationException e) {
             log.error("Insert Member Data Integrity Violation: {}", e.getMessage(), e);

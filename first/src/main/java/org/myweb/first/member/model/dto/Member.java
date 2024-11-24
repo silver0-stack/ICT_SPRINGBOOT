@@ -3,6 +3,7 @@ package org.myweb.first.member.model.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,13 +25,20 @@ import java.util.Set;
 @NoArgsConstructor // 기본 생성자 생성
 @Builder // 빌더 패턴 지원
 public class Member {
-	@NotBlank  // 빈 값일 수 없음 (유효성 검사)
+	@NotBlank(message = "userId는 필수 입력 항목입니다.")  // 빈 값일 수 없음 (유효성 검사)
 	private String userId;  // 사용자 ID, DB 컬럼: USERID, 타입: VARCHAR2(50 BYTE)
-	private String userPwd; // 사용자 비밀번호, DB 컬럼: USERPWD, 타입: VARCHAR2(100 BYTE)
+	@NotBlank(message="비밀번호는 필수 입력 항목입니다.")
+	@Size(min=8, message="비밀번호는 최소 8자리 이상이어야 합니다.")
+	private String userPwd; // 사용자 비밀번호, DB 컬럼: USERPWD, 타입: VARCHAR2(100 BYTE)+
+	@NotBlank(message="이름은 필수 입력 항목입니다.")
 	private String userName; // 사용자 이름, DB 컬럼: USERNAME, 타입: VARCHAR2(20 BYTE)
+	@NotBlank(message="성별은 필수 입력 항목입니다.")
 	private String gender;  // 성별, DB 컬럼: GENDER, 타입: CHAR(1 BYTE)
+	@NotBlank(message="성별은 필수 입력 항목입니다.")
 	private int age;   // 나이, DB 컬럼: AGE, 타입: NUMBER(3,0)
+	@NotBlank(message="성별은 필수 입력 항목입니다.")
 	private String phone;  // 전화번호, DB 컬럼: PHONE, 타입: VARCHAR2(13 BYTE)
+	@NotBlank(message="성별은 필수 입력 항목입니다.")
 	private String email;   // 이메일, DB 컬럼: EMAIL, 타입: VARCHAR2(30 BYTE)
 
 	@JsonFormat(pattern="yyyy-MM-dd")  // JSON 직렬화 시 날짜 형식 지정
