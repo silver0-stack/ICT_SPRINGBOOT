@@ -62,11 +62,11 @@ public class SecurityConfig {
                 // 권한 룰 설정: HTTP 요청에 대한 권한 규칙을 설정한다.
                 .authorizeHttpRequests(authorize -> authorize
                         // 로그인, 회원가입, ID 체크 엔드포인트에 대한 모든 요청 허용: 인증되지 않은 사용자도 접근할 수 있어야 함
-                        .requestMatchers("/api/members/login", "/api/members/enroll", "/api/members/idchk", "/api/members/{userId}").permitAll()
+                        .requestMatchers("/api/members/login", "/api/members/enroll", "/api/members/idchk", "/api/members/photo/**").permitAll()
                         // GET /api/members/** 엔드포인트는 ROLE_USER 또는 ROLE_ADMIN에게 허용
                         .requestMatchers(HttpMethod.GET, "/api/members/**").hasAnyRole("USER", "ADMIN")
                         // 그 외의 /api/members/** 엔드포인트(POST, PUT, DELETE 등)는 ROLE_ADMIN에게만 허용
-                        .requestMatchers("/api/members/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/members/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger UI 접근 허용
                         // 그 외 모든 명시하지 않은 요청은 인증된 사용자이기만 하면 접근 가능: 보안강화를 위해 기본적으로 모든 요청에 대해 인증 요구
                         .anyRequest().authenticated()

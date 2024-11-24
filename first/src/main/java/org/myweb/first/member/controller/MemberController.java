@@ -2,32 +2,35 @@ package org.myweb.first.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.myweb.first.member.model.dto.*;
+import org.springframework.core.io.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.myweb.first.common.ApiResponse;
 import org.myweb.first.common.LoginResponse;
 import org.myweb.first.common.util.JwtUtil;
-import org.myweb.first.member.model.dto.Member;
-import org.myweb.first.member.model.dto.MemberInfoDTO;
-import org.myweb.first.member.model.dto.RefreshTokenRequest;
-import org.myweb.first.member.model.dto.User;
 import org.myweb.first.member.model.service.MemberService;
 import org.myweb.first.member.model.service.RefreshTokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -114,7 +117,7 @@ public class MemberController {
     /**
      * Refresh Token을 사용하여 새로운 Access Token 발급
      *
-     * @param refreshTokenRequeset Refresh Token 요청 DTO
+     * @param refreshTokenRequest Refresh Token 요청 DTO
      * @return 새로운 Access Token을 포함한 응답
      */
     @PostMapping("/refresh-token")
@@ -321,6 +324,46 @@ public class MemberController {
     }
 
     /**
+     * 프로필 사진 제공 메소드
+     *
+     * @param fileName 프로필 사진 파일명
+     * @return 프로필 사진 파일 로소스
+     */
+    @GetMapping("/photo/{fileName}")
+    public ResponseEntity<Resource> getProfilePhoto(@PathVariable String fileName) {
+        try {
+            // 파일 이름 검증: 파일 이름에 '..' 또는 '/' 포함 여부 확인
+            if(fileName.contains("..") || fileName.contains("/")){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
+            Path filePath = Paths.get(uploadDir).resolve(fileName).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+
+            if (!resource.exists()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // 파일의 Content-Type 설정 (이미지 파일에 맞게 설정)
+            String contentType = "application/octet-stream";
+            try {
+                contentType = Files.probeContentType(filePath);
+            } catch (IOException ex) {
+               ex.printStackTrace();;
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+        } catch (MalformedURLException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+
+    }
+
+
+    /**
      * '내 정보 보기' 처리 메소드
      *
      * @param userId 사용자 ID
@@ -340,12 +383,12 @@ public class MemberController {
             Member member = memberOpt.get();
 
             // 원본 파일 이름 추출 (사용자 ID 제거)
-            String originalFilename = null;
-            if (member.getPhotoFileName() != null) {
-                int underscoreIndex = member.getPhotoFileName().indexOf('_');
-                originalFilename = underscoreIndex != -1 ? member.getPhotoFileName().substring(underscoreIndex + 1) : member.getPhotoFileName();
-            }
-            member.setPhotoFileName(originalFilename); // 조회할 DTO에 원본 파일명 설정
+//            String originalFilename = null;
+//            if (member.getPhotoFileName() != null) {
+//                int underscoreIndex = member.getPhotoFileName().indexOf('_');
+//                originalFilename = underscoreIndex != -1 ? member.getPhotoFileName().substring(underscoreIndex + 1) : member.getPhotoFileName();
+//            }
+//            member.setPhotoFileName(originalFilename); // 조회할 DTO에 원본 파일명 설정
 
             // MemberInfoDTO 로 변환(비밀번호 제외)
             MemberInfoDTO memberInfoDTO = new MemberInfoDTO(
@@ -360,7 +403,7 @@ public class MemberController {
                     member.getSignType(),
                     member.getAdminYN(),
                     member.getLoginOk(),
-                    member.getPhotoFileName(),
+                    member.getPhotoFileName(), // 전체 파일명 포함
                     member.getRoles()
             );
 
@@ -392,11 +435,20 @@ public class MemberController {
      */
     // 회원 정보 수정 처리
     @PutMapping("/{userId}")
-    @Operation(summary = "회원 수정", description = "유저가 회원 정보 수정할 때 사용하는 API")
+    // 사용자가 자신의 프로필을 수정하거나 ROLE_ADMIN인 경우에만 접근할 수 있도록 설정
     public ResponseEntity<ApiResponse<Member>> memberUpdateMethod(@PathVariable("userId") String userId,
-                                                                  @ModelAttribute Member member,
+                                                                  @ModelAttribute @Valid  MemberUpdateDTO member,
+                                                                  BindingResult bindingResult,
                                                                   @RequestParam(name = "photoFile", required = false) MultipartFile mfile) {
         log.info("Member update attempt: {}", member); // 회원 정보 수정 시도 로그
+
+        if (bindingResult.hasErrors()) {
+            String errorMessage = bindingResult.getAllErrors().stream()
+                    .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                    .collect(Collectors.joining(", "));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<Member>builder().success(false).message(errorMessage).build()); // 오류 ���� 반환SA
+        }
 
         // 기존 회원 정보 조회
         Optional<Member> existingMemberOpt = memberService.selectMember(userId);
@@ -417,6 +469,13 @@ public class MemberController {
             log.info("Encoded new password: {}, length: {} for userId: {}", member.getUserPwd(), member.getUserPwd().length(), userId);
         }
 
+        // 업데이트 가능한 필드만 설정
+        existingMember.setUserName(member.getUserName());
+        existingMember.setGender(member.getGender());
+        existingMember.setAge(member.getAge());
+        existingMember.setPhone(member.getPhone());
+        existingMember.setEmail(member.getEmail());
+
         // 파일 업로드 처리
         if (mfile != null && !mfile.isEmpty()) {
             String fileName = StringUtils.cleanPath(Objects.requireNonNull(mfile.getOriginalFilename()));
@@ -430,9 +489,14 @@ public class MemberController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response); // 오류 응답 반환
             }
 
+            // 기존 파일명에서 원본 파일명 추출
+            String existingOriginalFileName = existingMember.getPhotoFileName() != null
+                    ? existingMember.getPhotoFileName().substring(existingMember.getPhotoFileName().indexOf('_') + 1)
+                    : "";
+
             // 기존 파일명과 다른 경우에만 파일 저장
-            if (!fileName.equals(existingMember.getPhotoFileName())) {
-                String renameFileName = member.getUserId() + "_" + fileName;
+            if (!fileName.equals(existingOriginalFileName)) {
+                String renameFileName = existingMember.getUserId() + "_" + fileName;
 
                 try {
                     // 업로드 디렉토리 경로 설정
@@ -456,26 +520,27 @@ public class MemberController {
                 }
             }
 
-        } else {
-            // 파일이 없는 경우 기존 파일명 유지
-            existingMember.setPhotoFileName(userId + "_" + existingMember.getPhotoFileName());
         }
-
         // 기타 필드 수정
         existingMember.setLastModified(new Date(System.currentTimeMillis())); //최종 수정일
-        existingMember.setAdminYN(member.getAdminYN()); //관리자 여부 업데이트
-        existingMember.setLoginOk(member.getLoginOk()); // 로그인 허용 여부 업데이트
-        existingMember.setSignType(member.getSignType()); // 가입 방식 업데이트
+
+        // **관리자 전용 필드 업데이트는 제외**
+        // existingMember.setAdminYN(member.getAdminYN()); //관리자 전용 필드
+        // existingMember.setLoginOk(member.getLoginOk()); // 관리자 전용 필드
+        // existingMember.setSignType(member.getSignType()); // 필요 시 업데이트
 
         //회원 정보 수정 처리
         int result = memberService.updateMember(existingMember);
         if (result > 0) {
-            // 성공 응답 생성
-            ApiResponse<Member> response = ApiResponse.<Member>builder()
-                    .success(true)
-                    .message("회원 정보 수정 완료")
-                    .build();
-            return ResponseEntity.ok(response); // 성공 응답 반환
+            Optional<Member> updatedMemberOpt = memberService.selectMember(userId);
+            if (updatedMemberOpt.isPresent()) {
+                ApiResponse<Member> response = ApiResponse.<Member>builder()
+                        .success(true)
+                        .message("회원 정보 수정 완료")
+                        .data(updatedMemberOpt.get())
+                        .build();
+                return ResponseEntity.ok(response);
+            }
         } else {
             // 실패 응답 생성
             ApiResponse<Member> response = ApiResponse.<Member>builder()
@@ -484,6 +549,7 @@ public class MemberController {
                     .build();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response); // 실패 응답 반환
         }
+        return null;
     }
 
     /**

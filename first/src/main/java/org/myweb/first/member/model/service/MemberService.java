@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.DynamicUpdate;
 import org.myweb.first.common.Search;
 import org.myweb.first.member.jpa.entity.MemberEntity;
 import org.myweb.first.member.jpa.repository.MemberQueryRepository;
@@ -26,6 +27,7 @@ import org.springframework.util.StringUtils;
 @Service
 @RequiredArgsConstructor    //매개변수 있는 생성자를 반드시 실행시켜야 한다는 설정임
 @Transactional(readOnly=true) // 기본적으로 읽기 전용 트랜잭션 설정
+@DynamicUpdate // 변경된 필드만 업데이트하도록 설정
 public class MemberService {
     private final MemberRepository memberRepository; // 회원 리포지토리
     private final MemberQueryRepository memberQueryRepository; // 복잡한 쿼리를 처리하는 리포지토리
