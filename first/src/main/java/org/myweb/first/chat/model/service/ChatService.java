@@ -48,7 +48,7 @@ public class ChatService {
     }
 
     public List<ChatMessage> getChatHistory(String userId) {
-        List<ChatMessageEntity> chatHistory = chatRepository.findByMsgSenderUUID(userId);
+        List<ChatMessageEntity> chatHistory = chatRepository.findAllByConversationId(userId);
         if(!chatHistory.isEmpty()){
             return chatHistory.stream()
                     .map(ChatMessageEntity::toDto) // toDto() 메소드 호출

@@ -1,86 +1,84 @@
 package org.myweb.first.member.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.myweb.first.member.jpa.entity.MemberEntity;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.sql.Timestamp;
+import java.util.UUID;
 
-
-/*
- * 회원 정보 DTO (Data Transfer Object)
- * 데이터 이동 및 비즈니스 로직 처리에 사용
- * */
-@Data  //@Getter, @Setter, @ToString, @Equals, @HashCode 오버라이딩 까지 자동 생성됨
-@AllArgsConstructor // 모든 필드를 인자로 받는 생성자 생성
-@NoArgsConstructor // 기본 생성자 생성
-@Builder // 빌더 패턴 지원
+/**
+ * Member 클래스는 MEMBER 테이블의 데이터를 전송하기 위한 DTO 클래스입니다.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Member {
-    @NotBlank(message = "userId는 필수 입력 항목입니다.")  // 빈 값일 수 없음 (유효성 검사)
-    private String userId;  // 사용자 ID, DB 컬럼: USERID, 타입: VARCHAR2(50 BYTE)
-    @NotBlank(message = "비밀번호는 필수 입력 항목입니다.")
-    @Size(min = 8, message = "비밀번호는 최소 8자리 이상이어야 합니다.")
-    private String userPwd; // 사용자 비밀번호, DB 컬럼: USERPWD, 타입: VARCHAR2(100 BYTE)+
-    @NotBlank(message = "이름은 필수 입력 항목입니다.")
-    private String userName; // 사용자 이름, DB 컬럼: USERNAME, 타입: VARCHAR2(20 BYTE)
-    @NotBlank(message = "성별은 필수 입력 항목입니다.")
-    private String gender;  // 성별, DB 컬럼: GENDER, 타입: CHAR(1 BYTE)
-    // @NotBlank(message="나이는 필수 입력 항목입니다.")
-	/*
-	@NotBlank는 String 타입에만 유효하며 , 빈 문자열 또는 공백 문자열을 검증하기 위한 어노테이션이다.
-	따라서 숫자 타입의 필드에 적용하면 유효성 검사 시젬에 예외가 발생하게 된다
-	 */
-    @Min(value = 0, message = "나이는 0 이상이어야 합니다.")
-    @Max(value = 300, message = "나이는 150 이하이어야 합니다.")
-    private int age;   // 나이, DB 컬럼: AGE, 타입: NUMBER(3,0)
-    @NotBlank(message = "전화번호는 필수 입력 항목입니다.")
-    private String phone;  // 전화번호, DB 컬럼: PHONE, 타입: VARCHAR2(13 BYTE)
-    @NotBlank(message = "이메일은 필수 입력 항목입니다.")
-    @Email(message="유효한 이메일 형식이어야 합니다.") // 이메일 형식 검증 어노테이션 추가
-    private String email;   // 이메일, DB 컬럼: EMAIL, 타입: VARCHAR2(30 BYTE)
 
-    @JsonFormat(pattern = "yyyy-MM-dd")  // JSON 직렬화 시 날짜 형식 지정
-    private java.sql.Date enrollDate;  // 가입일, DB 컬럼: ENROLL_DATE, 타입: DATE
+    private UUID memUuid; // 회원 고유 식별자
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private java.sql.Date lastModified;  // 최종 수정일, DB 컬럼: LASTMODIFIED, 타입: DATE
+    private String memId; // 회원 아이디
 
-    private String signType;  // 가입 방식, DB 컬럼: SIGNTYPE, 타입: VARCHAR2(10 BYTE)
-    private String adminYN;  // 관리자 여부, DB 컬럼: ADMIN_YN, 타입: CHAR(1 BYTE)
-    private String loginOk;  // 로그인 허용 여부, DB 컬럼: LOGIN_OK, 타입: CHAR(1 BYTE)
-    private String photoFileName;  // 프로필 사진 파일명, DB 컬럼: PHOTO_FILENAME, 타입: VARCHAR2(100 BYTE)
-    private String roles;  // 사용자 역할, DB 컬럼: ROLES, 타입: VARCHAR2
+    private String memPw; // 회원 비밀번호
 
+    private String memName; // 회원 이름
 
-    /*
-     * DTO를 엔터티로 변환하는 메소드
-     * @return 회원 엔터티
-     */
+    private String memType; // 회원 타입
+
+    private String memEmail; // 회원 이메일
+
+    private String memAddress; // 회원 주소
+
+    private String memCellphone; // 휴대전화번호
+
+    private String memPhone; // 일반전화번호
+
+    private String memRnn; // 주민등록번호
+
+    private String memGovCode; // 관공서코드
+
+    private String memStatus; // 회원 상태
+
+    private Timestamp memEnrollDate; // 가입일자
+
+    private Timestamp memChangeStatus; // 가족계정 승인여부 변경일자
+
+    private String memFamilyApproval; // 가족계정 승인여부
+
+    private String memSocialKakao; // 소셜연동 KAKAO
+
+    private String memKakaoEmail; // KAKAO 이메일
+
+    private String memSocialNaver; // 소셜연동 NAVER
+
+    private String memNaverEmail; // NAVER 이메일
+
+    private String memSocialGoogle; // 소셜연동 GOOGLE
+
+    private String memGoogleEmail; // GOOGLE 이메일
+
+    private UUID memUuidFam; // 가족 고유 식별자
+
+    private UUID memUuidMgr; // 담당자 고유 식별자
+
     public MemberEntity toEntity() {
         return MemberEntity.builder()
-                .userId(this.userId)
-                .userPwd(this.userPwd)
-                .userName(this.userName)
-                .gender(this.gender)
-                .age(this.age)
-                .phone(this.phone)
-                .email(this.email)
-                .enrollDate(this.enrollDate)
-                .lastModified(this.lastModified)
-                .signType(this.signType)
-                .adminYN(this.adminYN)
-                .loginOk(this.loginOk)
-                .photoFileName(this.photoFileName)
-                // roles 필드 추가
-                .roles(this.roles)
+               .memUuid(String.valueOf(this.memUuid))
+               .memId(this.memId)
+               .memPw(this.memPw)
+               .memName(this.memName)
+               .memType(this.memType)
+               .memEmail(this.memEmail)
+               .memAddress(this.memAddress)
+               .memCellphone(this.memCellphone)
+               .memPhone(this.memPhone)
+               .memRnn(this.memRnn)
+               .memGovCode(this.memGovCode)
+               .memStatus(this.memStatus)
+               .memEnrollDate(this.memEnrollDate)
+               .memChangeStatus(this.memChangeStatus)
+               .memFamilyApproval(this.memFamilyApproval)
+               .memSocialKakao(this.memSocialKakao)
                 .build();
     }
 }

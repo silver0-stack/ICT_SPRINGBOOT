@@ -9,8 +9,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.myweb.first.chat.model.dto.ChatMessage;
-import org.myweb.first.member.model.dto.Member;
-
 import java.sql.Timestamp;
 import java.util.UUID;
 
@@ -23,21 +21,28 @@ import java.util.UUID;
 public class ChatMessageEntity {
     @Id
     @Column(name = "MSG_ID", nullable = false)
-    private UUID msgId;  // MSG_ID    VARCHAR2(50 BYTE) :  메시지 ID (PK)
-    @Column(name = "MSG_SENDER_ROLE", nullable = false)
-    private String msgSenderRole; // MSG_SENDER_ROLE
+    private UUID msgId;  // 메시지 ID (PK)
+
+    @Column(name="MSG_SENDER_ROLE", nullable = false)
+    private String msgSenderRole; // "user" 또는 "assistant"
+
     @Column(name = "MESSAGE", nullable = false, length = 2000)
-    private String msgContent; // MSG_CONTENT   CLOB: 메시지 내용
-    @Column(name = "MSG_SENT_AT", nullable = false)
-    private Timestamp msgSentAt; // MSG_SENT_AT TIMESTAMP 전송 시각
+    private String msgContent; // 메시지 내용
+
+    @Column(name="MSG_SENT_AT", nullable = false)
+    private Timestamp msgSentAt; // 전송 시각
+
     @Column(name = "MSG_SENDER_UUID", nullable = false, length = 50)
-    private String msgSenderUUID;  // SENDER_ID    VARCHAR2(50 BYTE) : 작성자 UUID (FK)
+    private String msgSenderUUID;  // 작성자 UUID (FK)
+
+    @Column(name = "CONVERSATION_ID", nullable = false, length = 50)
+    private String conversationId; // 대화 그룹 ID (사용자 UUID로 고정)
+
+    @Column(name="PARENT_MSG_ID", nullable = true)
+    private UUID parentMsgId; // 부모 메시지 ID (사용자 메시지에 대한 응답인 경우)
 
 
-    /*
-     * 엔터티를 DTO로 변환하는 메소드
-     * @return 회원 정보 DTO
-     * */
+    // DTO 변환 메서드
     public ChatMessage toDto() {
         return ChatMessage.builder()
                 .msgId(this.msgId)
@@ -45,6 +50,8 @@ public class ChatMessageEntity {
                 .msgContent(this.msgContent)
                 .msgSentAt(this.msgSentAt)
                 .msgSenderUUID(this.msgSenderUUID)
+                .conversationId(this.conversationId)
+                .parentMsgId(this.parentMsgId)
                 .build();
     }
 }
