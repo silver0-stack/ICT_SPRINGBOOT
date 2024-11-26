@@ -190,11 +190,11 @@ public class MemberController {
      * @return 중복 상태 ("ok": 중복되지 않음, "dup": 중복됨)
      */
     @PostMapping("/idchk")
-    public ResponseEntity<ApiResponse<String>> dupCheckIdMethod(@RequestParam("userId") String userId) {
-        log.info("ID check for userId: {}", userId); // ID 체크 로그
+    public ResponseEntity<ApiResponse<String>> dupCheckIdMethod(@RequestParam("memId") String memId) {
+        log.info("ID check for userId: {}", memId); // ID 체크 로그
 
         // ID 존재 여부 확인
-        int userIdCount = memberService.selectCheckId(userId);
+        int userIdCount = memberService.selectCheckId(memId);
         String status = (userIdCount == 0) ? "ok" : "dup";
 
         // API 응답 생성
@@ -215,7 +215,7 @@ public class MemberController {
      * @return 회원가입 결과 응답
      */
     @PostMapping("/enroll")
-    public ResponseEntity<ApiResponse<Member>> memberInsertMethod(@Valid @ModelAttribute Member member,
+    public ResponseEntity<ApiResponse<Member>> createMember(@Valid @ModelAttribute Member member,
                                                                   BindingResult bindingResult,
                                                                   @RequestParam(name = "photoFile", required = false) MultipartFile mfile) {
 
@@ -229,10 +229,11 @@ public class MemberController {
         log.info("Enrollment attempt: {}", member); //회원가입 시도 로그
 
         // 비밀번호 암호화
-        if (StringUtils.hasText(member.getUserPwd())) {
-            member.setUserPwd(memberService.encodedPassword(member.getUserPwd()));
-            log.info("Encoded password: {}", member.getUserPwd());
-        }
+        /* 서비스계층에서 암호화 처리*/
+//        if (StringUtils.hasText(member.getUserPwd())) {
+//            member.setUserPwd(memberService.encodedPassword(member.getUserPwd()));
+//            log.info("Encoded password: {}", member.getUserPwd());
+//        }
 
         // 파일 업로드 처리
         if (mfile != null && !mfile.isEmpty()) {
@@ -248,7 +249,7 @@ public class MemberController {
             }
 
             // 파일 이름 재정의 (사용자ID + 원본 파일명)
-            String renameFileName = member.getUserId() + "_" + fileName;
+            String renameFileName = member.getMemId() + "_" + fileName;
 
             try {
                 // 업로드 디렉토리 경로 설정
@@ -274,17 +275,17 @@ public class MemberController {
         }
 
         // 기본값 설정
-        member.setLoginOk("Y"); // 로그인 허용
-        member.setAdminYN("N"); // 관리자 여부: N
-        member.setSignType("direct"); // 가입 방식: direct
+//        member.setLoginOk("Y"); // 로그인 허용
+//        member.setAdminYN("N"); // 관리자 여부: N
+//        member.setSignType("direct"); // 가입 방식: direct
 
 
         // 역할 할당
-        if ("Y".equalsIgnoreCase(member.getAdminYN())) {
-            member.setRoles("ADMIN"); // 관리자 역할 설정
-        } else {
-            member.setRoles("USER"); // 일반 사용자 역할 설정
-        }
+//        if ("Y".equalsIgnoreCase(member.getAdminYN())) {
+//            member.setRoles("ADMIN"); // 관리자 역할 설정
+//        } else {
+//            member.setRoles("USER"); // 일반 사용자 역할 설정
+//        }
         log.info("Final member data: {}", member); // 최종 회원 데이터 로그
 
         // 회원가입 처리
@@ -371,54 +372,46 @@ public class MemberController {
      */
     /* userPwd(비밀번호 해시)는 절대 클라이언트에 노출되어서는 안 됨, 데이터 유출 시 큰 보안 사고임
      * 따라서 userPwd만 없는 새로운 MemberInfoDTO 클래스를 생성해서 반환함*/
-    @GetMapping("/{userId}")
+    @GetMapping("/{memId}")
     @Operation(summary = "회원 조회", description = "유저가 로그인 후 회원 조회하는 API")
-    public ResponseEntity<ApiResponse<MemberInfoDTO>> memberDetailMethod(@PathVariable("userId") String userId) {
-        log.info("Fetching member info for userId: {}", userId); // 회원 정보 조회 시도 로그
+    public ResponseEntity<ApiResponse<Member>> getMemberById(@PathVariable String memId) {
+        log.info("Fetching member info for userId: {}", memId); // 회원 정보 조회 시도 로그
 
         // 사용자 ID로 회원 정보 조회
-        Optional<Member> memberOpt = memberService.selectMember(userId);
+        Optional<Member> memberOpt = memberService.selectMember(memId);
 
         if (memberOpt.isPresent()) {
             Member member = memberOpt.get();
 
-            // 원본 파일 이름 추출 (사용자 ID 제거)
-//            String originalFilename = null;
-//            if (member.getPhotoFileName() != null) {
-//                int underscoreIndex = member.getPhotoFileName().indexOf('_');
-//                originalFilename = underscoreIndex != -1 ? member.getPhotoFileName().substring(underscoreIndex + 1) : member.getPhotoFileName();
-//            }
-//            member.setPhotoFileName(originalFilename); // 조회할 DTO에 원본 파일명 설정
-
             // MemberInfoDTO 로 변환(비밀번호 제외)
-            MemberInfoDTO memberInfoDTO = new MemberInfoDTO(
-                    member.getUserId(),
-                    member.getUserName(),
-                    member.getGender(),
-                    member.getAge(),
-                    member.getPhone(),
-                    member.getEmail(),
-                    member.getEnrollDate(),
-                    member.getLastModified(),
-                    member.getSignType(),
-                    member.getAdminYN(),
-                    member.getLoginOk(),
-                    member.getPhotoFileName(), // 전체 파일명 포함
-                    member.getRoles()
-            );
+//            MemberInfoDTO memberInfoDTO = new MemberInfoDTO(
+//                    member.getUserId(),
+//                    member.getUserName(),
+//                    member.getGender(),
+//                    member.getAge(),
+//                    member.getPhone(),
+//                    member.getEmail(),
+//                    member.getEnrollDate(),
+//                    member.getLastModified(),
+//                    member.getSignType(),
+//                    member.getAdminYN(),
+//                    member.getLoginOk(),
+//                    member.getPhotoFileName(), // 전체 파일명 포함
+//                    member.getRoles()
+//            );
 
             // 성공 응답 생성
-            ApiResponse<MemberInfoDTO> response = ApiResponse.<MemberInfoDTO>builder()
+            ApiResponse<Member> response = ApiResponse.<Member>builder()
                     .success(true)
-                    .message("회원 정보 조회 성공")
-                    .data(memberInfoDTO)
+                    .message("회원 조회 성공")
+                    .data(member)
                     .build();
             return ResponseEntity.ok(response); // 성공 응답 반환
         } else {
             // 실패 응답 생성
-            ApiResponse<MemberInfoDTO> response = ApiResponse.<MemberInfoDTO>builder()
+            ApiResponse<Member> response = ApiResponse.<Member>builder()
                     .success(false)
-                    .message(userId + "에 대한 회원 정보 조회 실패!")
+                    .message(memId + "에 대한 회원 정보 조회 실패!")
                     .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); // 실패 응답 반환
         }
@@ -434,10 +427,10 @@ public class MemberController {
      * @return 수정 결과 응답
      */
     // 회원 정보 수정 처리
-    @PutMapping("/{userId}")
+    @PutMapping("/{memUuid}")
     // 사용자가 자신의 프로필을 수정하거나 ROLE_ADMIN인 경우에만 접근할 수 있도록 설정
-    public ResponseEntity<ApiResponse<Member>> memberUpdateMethod(@PathVariable("userId") String userId,
-                                                                  @ModelAttribute @Valid  MemberUpdateDTO member,
+    public ResponseEntity<ApiResponse<Member>> memberUpdateMethod(@PathVariable String memUuid,
+                                                                  @ModelAttribute @Valid  Member member,
                                                                   BindingResult bindingResult,
                                                                   @RequestParam(name = "photoFile", required = false) MultipartFile mfile) {
         log.info("Member update attempt: {}", member); // 회원 정보 수정 시도 로그
@@ -451,7 +444,7 @@ public class MemberController {
         }
 
         // 기존 회원 정보 조회
-        Optional<Member> existingMemberOpt = memberService.selectMember(userId);
+        Optional<Member> existingMemberOpt = memberService.selectMember(memUuid);
         if (existingMemberOpt.isEmpty()) {
             // 회원 정보가 없을 경우 실패 응답 반환
             ApiResponse<Member> response = ApiResponse.<Member>builder()
@@ -464,17 +457,17 @@ public class MemberController {
         Member existingMember = existingMemberOpt.get();
 
         // 비밀번호 변경 여부 확인 및 엄호화
-        if (StringUtils.hasText(member.getUserPwd())) {
-            existingMember.setUserPwd(memberService.encodedPassword(member.getUserPwd()));
-            log.info("Encoded new password: {}, length: {} for userId: {}", member.getUserPwd(), member.getUserPwd().length(), userId);
+        if (StringUtils.hasText(member.getMemPw())) {
+            existingMember.setMemPw(memberService.encodedPassword(member.getMemPw()));
+            log.info("Encoded new password: {}, length: {} for user UUID: {}", member.getMemPw(), member.getMemPw().length(), memUuid);
         }
 
         // 업데이트 가능한 필드만 설정
-        existingMember.setUserName(member.getUserName());
-        existingMember.setGender(member.getGender());
-        existingMember.setAge(member.getAge());
-        existingMember.setPhone(member.getPhone());
-        existingMember.setEmail(member.getEmail());
+//        existingMember.setUserName(member.getUserName());
+//        existingMember.setGender(member.getGender());
+//        existingMember.setAge(member.getAge());
+//        existingMember.setPhone(member.getPhone());
+//        existingMember.setEmail(member.getEmail());
 
         // 파일 업로드 처리
         if (mfile != null && !mfile.isEmpty()) {
@@ -496,7 +489,7 @@ public class MemberController {
 
             // 기존 파일명과 다른 경우에만 파일 저장
             if (!fileName.equals(existingOriginalFileName)) {
-                String renameFileName = existingMember.getUserId() + "_" + fileName;
+                String renameFileName = existingMember.getMemUuid() + "_" + fileName;
 
                 try {
                     // 업로드 디렉토리 경로 설정
@@ -522,7 +515,7 @@ public class MemberController {
 
         }
         // 기타 필드 수정
-        existingMember.setLastModified(new Date(System.currentTimeMillis())); //최종 수정일
+        //existingMember.setLastModified(new Date(System.currentTimeMillis())); //최종 수정일
 
         // **관리자 전용 필드 업데이트는 제외**
         // existingMember.setAdminYN(member.getAdminYN()); //관리자 전용 필드
@@ -532,7 +525,7 @@ public class MemberController {
         //회원 정보 수정 처리
         int result = memberService.updateMember(existingMember);
         if (result > 0) {
-            Optional<Member> updatedMemberOpt = memberService.selectMember(userId);
+            Optional<Member> updatedMemberOpt = memberService.selectMember(memUuid);
             if (updatedMemberOpt.isPresent()) {
                 ApiResponse<Member> response = ApiResponse.<Member>builder()
                         .success(true)
@@ -558,26 +551,26 @@ public class MemberController {
      * @param userId 사용자 ID
      * @return 삭제 결과 응답
      */
-    @DeleteMapping("/{userId}")
+    @DeleteMapping("/{memUuid}")
     @Operation(summary = "회원 삭제", description = "회원 탈퇴할 때 사용하는 API")
-    public ResponseEntity<ApiResponse<String>> memberDeleteMethod(@PathVariable("userId") String userId) {
-        log.info("Deleting member with userId: {}", userId); // 회원 삭제 시도 로그
+    public ResponseEntity<ApiResponse<String>> deleteMember(@PathVariable String memUuid) {
+        log.info("Deleting member with userId: {}", memUuid); // 회원 삭제 시도 로그
 
         // 회원 삭제 처리
-        int result = memberService.deleteMember(userId);
+        int result = memberService.deleteMember(memUuid);
         if (result > 0) {
             // 성공 응답 생성
             ApiResponse<String> response = ApiResponse.<String>builder()
                     .success(true)
                     .message("회원 탈퇴가 완료되었습니다.")
-                    .data("삭제된 userId: " + userId)
+                    .data("삭제된 member UUID: " + memUuid)
                     .build();
             return ResponseEntity.ok(response); // 성공 응답 반환
         } else {
             // 실패 응답 생성
             ApiResponse<String> response = ApiResponse.<String>builder()
                     .success(false)
-                    .message(userId + "님의 회원 탈퇴 실패! 관리자에게 문의하세요. ")
+                    .message(memUuid + "님의 회원 탈퇴 실패! 관리자에게 문의하세요. ")
                     .build();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response); // 실패 응답 반환
         }
@@ -592,7 +585,6 @@ public class MemberController {
      * @return 회원 목록 응답
      */
     @GetMapping
-    @Operation(summary = "관리자의 회원목록 조회", description = "관리자가 회원의 목록을 조회할 때 사용하는 API")
     public ResponseEntity<ApiResponse<Page<Member>>> memberListMethod(
             @RequestParam(name = "page", defaultValue = "1") int currentPage,
             @RequestParam(name = "limit", defaultValue = "10") int limit,
@@ -642,40 +634,40 @@ public class MemberController {
      * @param userId 사용자 ID
      * @return 변경 결과 응답
      */
-    @PutMapping("/{userId}/loginok")
-    @Operation(summary = "로그인 상태 변경", description = "관리자가 로그인 상태 제한/허용 상태 변경할 때 사용하는 API")
-    public ResponseEntity<ApiResponse<Member>> changeLoginOKMethod(@RequestBody Member member, @PathVariable String userId) {
-
-        log.info("Updating login OK for userId: {}", userId); // 로그인 제한/허용 상태 변경 로그
-
-        member.setUserId(userId); // URL에서 받은 userId를 DTO에 설정
-
-        // 로그인 허용 상태 업데이트
-        int result = memberService.updateLoginOK(member);
-
-
-        if (result > 0) {
-            // 수정된 회원 정보 조회
-            Optional<Member> updatedMemberOpt = memberService.selectMember(userId);
-            if (updatedMemberOpt.isPresent()) {
-                // 성공 응답 생성
-                ApiResponse<Member> response = ApiResponse.<Member>builder()
-                        .success(true)
-                        .message("로그인 제한/허용 상태가 변경되었습니다.")
-                        .data(updatedMemberOpt.get())
-                        .build();
-                return ResponseEntity.ok(response); // 성공 응답 반환
-            }
-        }
-
-        // 실패 응답 생성
-        ApiResponse<Member> response = ApiResponse.<Member>builder()
-                .success(false)
-                .message("로그인 제한/허용 처리에 실패했습니다.")
-                .build();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response); // 실패 응답 반환
-
-    }
+//    @PutMapping("/{userId}/loginok")
+//    @Operation(summary = "로그인 상태 변경", description = "관리자가 로그인 상태 제한/허용 상태 변경할 때 사용하는 API")
+//    public ResponseEntity<ApiResponse<Member>> changeLoginOKMethod(@RequestBody Member member, @PathVariable String userId) {
+//
+//        log.info("Updating login OK for userId: {}", userId); // 로그인 제한/허용 상태 변경 로그
+//
+//        member.setUserId(userId); // URL에서 받은 userId를 DTO에 설정
+//
+//        // 로그인 허용 상태 업데이트
+//        int result = memberService.updateLoginOK(member);
+//
+//
+//        if (result > 0) {
+//            // 수정된 회원 정보 조회
+//            Optional<Member> updatedMemberOpt = memberService.selectMember(userId);
+//            if (updatedMemberOpt.isPresent()) {
+//                // 성공 응답 생성
+//                ApiResponse<Member> response = ApiResponse.<Member>builder()
+//                        .success(true)
+//                        .message("로그인 제한/허용 상태가 변경되었습니다.")
+//                        .data(updatedMemberOpt.get())
+//                        .build();
+//                return ResponseEntity.ok(response); // 성공 응답 반환
+//            }
+//        }
+//
+//        // 실패 응답 생성
+//        ApiResponse<Member> response = ApiResponse.<Member>builder()
+//                .success(false)
+//                .message("로그인 제한/허용 처리에 실패했습니다.")
+//                .build();
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response); // 실패 응답 반환
+//
+//    }
 
     /**
      * 관리자용 회원 검색 기능 메소드
@@ -689,57 +681,57 @@ public class MemberController {
      * @param sort        정렬 기준 (기본값: enrollDate,desc)
      * @return 검색 결과 응답
      */
-    @GetMapping("/search")
-    @Operation(summary = "멤버 필터링", description = "관리자 용 회원 검색할 때 사용하는 API")
-    public ResponseEntity<ApiResponse<Page<Member>>> memberSearchMethod(@RequestParam("action") String action,
-                                                                        @RequestParam(value = "keyword", required = false) String keyword,
-                                                                        @RequestParam(value = "begin", required = false) String beginStr,
-                                                                        @RequestParam(value = "end", required = false) String endStr,
-                                                                        @RequestParam(value = "page", defaultValue = "1") int currentPage,
-                                                                        @RequestParam(value = "limit", defaultValue = "10") int limit,
-                                                                        @RequestParam(name = "sort", defaultValue = "enrollDate,desc") String[] sort) {
-
-
-        log.info("Member search: action={}, keyword={}, begin={}, end={}, page={}, limit={}, sort={}",
-                action, keyword, beginStr, endStr, currentPage, limit, sort); // 검색 요청 로그
-
-
-        // 정렬 처리
-        Sort.Direction direction = Sort.Direction.DESC; // 기본 정렬 방향: 내림차순
-        String sortBy = "enrollDate"; // 기본 정렬 필드: 가입일
-
-        if (sort.length == 2) {
-            sortBy = sort[0]; // 정렬 기준 필드
-            direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC; // 정렬 방향 설정
-        }
-
-        // Pageable 객체 생성: 페이징 및 정렬 설정
-        Pageable pageable = PageRequest.of(currentPage - 1, limit, Sort.by(direction, sortBy));
-
-        // 검색 결과 조회
-        /*서비스 호출 및 Page 객체 반환
-         * searchMembers 메소드는 검색 조건에 따라 필터링된 회원 목록을 페이징하여 반환
-         * */
-        Page<Member> searchResult = memberService.searchMembers(action, keyword, beginStr, endStr, pageable);
-
-        // Page 객체의 hasContent() : 반환된 데이터 리스트가 있을 시 (boolean)
-        if (searchResult.hasContent()) {
-            // 성공 응답 생성
-            ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
-                    .success(true)
-                    .message("검색 결과 조회 성공")
-                    .data(searchResult)
-                    .build();
-            return ResponseEntity.ok(response); // 성공 응답 반환
-        } else {
-            // 검색 결과 없음 응답 생성
-            ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
-                    .success(false)
-                    .message("검색 결과가 존재하지 않습니다.")
-                    .build();
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); // 400 Not Found 반환
-        }
-
-
-    }
+//    @GetMapping("/search")
+//    @Operation(summary = "멤버 필터링", description = "관리자 용 회원 검색할 때 사용하는 API")
+//    public ResponseEntity<ApiResponse<Page<Member>>> memberSearchMethod(@RequestParam("action") String action,
+//                                                                        @RequestParam(value = "keyword", required = false) String keyword,
+//                                                                        @RequestParam(value = "begin", required = false) String beginStr,
+//                                                                        @RequestParam(value = "end", required = false) String endStr,
+//                                                                        @RequestParam(value = "page", defaultValue = "1") int currentPage,
+//                                                                        @RequestParam(value = "limit", defaultValue = "10") int limit,
+//                                                                        @RequestParam(name = "sort", defaultValue = "enrollDate,desc") String[] sort) {
+//
+//
+//        log.info("Member search: action={}, keyword={}, begin={}, end={}, page={}, limit={}, sort={}",
+//                action, keyword, beginStr, endStr, currentPage, limit, sort); // 검색 요청 로그
+//
+//
+//        // 정렬 처리
+//        Sort.Direction direction = Sort.Direction.DESC; // 기본 정렬 방향: 내림차순
+//        String sortBy = "enrollDate"; // 기본 정렬 필드: 가입일
+//
+//        if (sort.length == 2) {
+//            sortBy = sort[0]; // 정렬 기준 필드
+//            direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC; // 정렬 방향 설정
+//        }
+//
+//        // Pageable 객체 생성: 페이징 및 정렬 설정
+//        Pageable pageable = PageRequest.of(currentPage - 1, limit, Sort.by(direction, sortBy));
+//
+//        // 검색 결과 조회
+//        /*서비스 호출 및 Page 객체 반환
+//         * searchMembers 메소드는 검색 조건에 따라 필터링된 회원 목록을 페이징하여 반환
+//         * */
+//        Page<Member> searchResult = memberService.searchMembers(action, keyword, beginStr, endStr, pageable);
+//
+//        // Page 객체의 hasContent() : 반환된 데이터 리스트가 있을 시 (boolean)
+//        if (searchResult.hasContent()) {
+//            // 성공 응답 생성
+//            ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
+//                    .success(true)
+//                    .message("검색 결과 조회 성공")
+//                    .data(searchResult)
+//                    .build();
+//            return ResponseEntity.ok(response); // 성공 응답 반환
+//        } else {
+//            // 검색 결과 없음 응답 생성
+//            ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
+//                    .success(false)
+//                    .message("검색 결과가 존재하지 않습니다.")
+//                    .build();
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); // 400 Not Found 반환
+//        }
+//
+//
+//    }
 }

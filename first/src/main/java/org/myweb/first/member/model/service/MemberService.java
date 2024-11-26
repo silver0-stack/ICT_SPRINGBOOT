@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ import org.springframework.util.StringUtils;
 @DynamicUpdate // 변경된 필드만 업데이트하도록 설정
 public class MemberService {
     private final MemberRepository memberRepository; // 회원 리포지토리
-    private final MemberQueryRepository memberQueryRepository; // 복잡한 쿼리를 처리하는 리포지토리
+   // private final MemberQueryRepository memberQueryRepository; // 복잡한 쿼리를 처리하는 리포지토리
     private final BCryptPasswordEncoder passwordEncoder; // 비밀번호 암호화 인코더
 
     /**
@@ -42,16 +43,14 @@ public class MemberService {
     public int insertMember(Member member) {
         //save() -> 성공시 Entity, 실패시 null 리턴함, JPA 가 제공하는 메소드임
         try {
+            // UUID로 PK생성 후 toString()
+            member.setMemUuid(UUID.randomUUID().toString());
+            // 비밀번호 암호화 로직
+            member.setMemPw(passwordEncoder.encode(member.getMemPw()));
+
             MemberEntity memberEntity = member.toEntity();
-
             // userId 확인
-            log.info("Saving MemberEntity with userId: {}", memberEntity.getUserId());
-
-
-            if (memberEntity.getUserId() == null || memberEntity.getUserId().trim().isEmpty()) {
-                throw new IllegalArgumentException("userId는 필수 입력 항목입니다.");
-            }
-
+            log.info("Saving MemberEntity with userId: {}", memberEntity.getMemId());
             memberRepository.save(memberEntity);
             return 1;
         } catch (DataIntegrityViolationException e) {
@@ -64,8 +63,13 @@ public class MemberService {
         }
     }
 
-    public Optional<Member> selectMember(String userId) {
-        Optional<MemberEntity> memberEntityOpt = memberRepository.findById(userId);
+    /**
+     * 회원 ID로 회원 조회
+     * @param userId
+     * @return
+     */
+    public Optional<Member> selectMember(String memId) {
+        Optional<MemberEntity> memberEntityOpt = memberRepository.findByMemId(memId);
         if (memberEntityOpt.isPresent()) {
             Member member = memberEntityOpt.get().toDto(); //  엔터티를 dto로 변환
             log.debug("Loaded member: {}", member);
@@ -92,35 +96,30 @@ public class MemberService {
     }
 
     @Transactional
-    public int deleteMember(String userId) {
+    public int deleteMember(String memUuid) {
         try {   //리턴 타입을 int 로 맞추기 위해서 처리함
-            //deleteById() -> 리턴 타입이 void 임
-            //전달인자인 userid 가 null 인 경우 IllegalArgumentException 발생함
-            memberRepository.deleteById(userId);
-            return 1;
+            if(memberRepository.existsById(memUuid)){
+                memberRepository.deleteById(memUuid);
+                return 1;
+            }
         } catch (Exception e) {
             log.error("Delete Member Error: {}", e.getMessage());
             e.printStackTrace();
             return 0;
         }
+        return 0;
     }
 
     // ID 중복 체크
-    public int selectCheckId(String userid) {
-        return memberRepository.existsById(userid) ? 1 : 0;    //jpa가 제공하는 existsById 메소드 사용
+    public int selectCheckId(String memId) {
+        return memberRepository.existsById(memId) ? 1 : 0;    //jpa가 제공하는 existsById 메소드 사용
     }
 
-    /*관리자용 *************/
-    // 전체 회원 수 조회 메소드
-    public int selectListCount() {
-        return (int) memberRepository.count();
-    }
 
-    /* 전체 회원 조회 메소드
+    /** 전체 회원 조회 메소드
     * @param pageable 페이징 및 정렬 정보
     * @return 페이징된 회원 정보
     * */
-
     public Page<Member> getAllMembers(Pageable pageable){
         /*findAll(Pageable pageable)은 Spring Data JPA에서 제공하는 메소드로 페이징된 모든 데이터를 조회*/
     return memberRepository.findAll(pageable)
@@ -137,22 +136,22 @@ public class MemberService {
     * @return 페이징된 검색 결과
     * */
     // 조건별 회원 검색
-    public Page<Member> searchMembers(String action, String keyword, String beginStr, String endStr, Pageable pageable ){
-        Date begin = null;
-        Date end = null;
-
-        // enrollDate 기준 검색일 경우 날짜 변환
-        /*action이 enrollDaate이고 beginStr과 endStr이 존재하면 String을 Date로 변환*/
-        if("enrollDate".equals(action)&& StringUtils.hasText(beginStr)&&
-        StringUtils.hasText(endStr)){
-            begin=Date.valueOf(beginStr);
-            end=Date.valueOf(endStr);
-        }
-
-        // 쿼리 리포지토리를 통해 검색
-        return memberQueryRepository.searchMembers(action, keyword, begin, end, pageable)
-                .map(MemberEntity::toDto);
-    }
+//    public Page<Member> searchMembers(String action, String keyword, String beginStr, String endStr, Pageable pageable ){
+//        Date begin = null;
+//        Date end = null;
+//
+//        // enrollDate 기준 검색일 경우 날짜 변환
+//        /*action이 enrollDaate이고 beginStr과 endStr이 존재하면 String을 Date로 변환*/
+//        if("enrollDate".equals(action)&& StringUtils.hasText(beginStr)&&
+//        StringUtils.hasText(endStr)){
+//            begin=Date.valueOf(beginStr);
+//            end=Date.valueOf(endStr);
+//        }
+//
+//        // 쿼리 리포지토리를 통해 검색
+//        return memberQueryRepository.searchMembers(action, keyword, begin, end, pageable)
+//                .map(MemberEntity::toDto);
+//    }
     /*
     * 회원 목록 조회 메소드 (페이징)
     * @param pageable 페이징 및 정렬 정보
@@ -166,24 +165,24 @@ public class MemberService {
     * @param member 수정할 회원 정보 DTO
     * @return 처리 결과 (1: 성공, 0: 실패)
     * */
-    @Transactional
-    public int updateLoginOK(Member member) {
-        try {
-            // 기존 회원 엔터티 조회
-            MemberEntity existingEntity = memberRepository.findById(member.getUserId())
-                    .orElseThrow(() -> new IllegalArgumentException("Member not found with userId: " + member.getUserId()));
-            // 로그인 제한/허용 상태 수정
-            existingEntity.setLoginOk(member.getLoginOk());
-            // 수정된 엔터티 저장
-            memberRepository.save(existingEntity);
-            // 성공
-            return 1;
-        } catch (Exception e) {
-            log.error("Update LoginOK Error: {}", e.getMessage());
-            e.printStackTrace();
-            return 0; //실패
-        }
-    }
+//    @Transactional
+//    public int updateLoginOK(Member member) {
+//        try {
+//            // 기존 회원 엔터티 조회
+//            MemberEntity existingEntity = memberRepository.findById(member.getUserId())
+//                    .orElseThrow(() -> new IllegalArgumentException("Member not found with userId: " + member.getUserId()));
+//            // 로그인 제한/허용 상태 수정
+//            existingEntity.setLoginOk(member.getLoginOk());
+//            // 수정된 엔터티 저장
+//            memberRepository.save(existingEntity);
+//            // 성공
+//            return 1;
+//        } catch (Exception e) {
+//            log.error("Update LoginOK Error: {}", e.getMessage());
+//            e.printStackTrace();
+//            return 0; //실패
+//        }
+//    }
 
 
 

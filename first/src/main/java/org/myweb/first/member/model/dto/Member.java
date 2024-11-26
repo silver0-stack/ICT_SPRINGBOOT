@@ -3,6 +3,7 @@ package org.myweb.first.member.model.dto;
 import lombok.*;
 import org.myweb.first.member.jpa.entity.MemberEntity;
 
+import javax.management.relation.Role;
 import java.sql.Timestamp;
 import java.util.UUID;
 
@@ -15,7 +16,7 @@ import java.util.UUID;
 @Builder
 public class Member {
 
-    private UUID memUuid; // 회원 고유 식별자
+    private String memUuid; // 회원 고유 식별자
 
     private String memId; // 회원 아이디
 
@@ -57,9 +58,10 @@ public class Member {
 
     private String memGoogleEmail; // GOOGLE 이메일
 
-    private UUID memUuidFam; // 가족 고유 식별자
+    private String memUuidFam; // 가족 고유 식별자
 
-    private UUID memUuidMgr; // 담당자 고유 식별자
+    private String memUuidMgr; // 담당자 고유 식별자
+
 
     public MemberEntity toEntity() {
         return MemberEntity.builder()

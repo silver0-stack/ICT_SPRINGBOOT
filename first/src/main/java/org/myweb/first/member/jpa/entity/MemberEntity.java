@@ -121,7 +121,7 @@ public class MemberEntity {
      * */
     public Member toDto() {
         return Member.builder()
-                .memUuid(UUID.fromString(this.memUuid))
+                .memUuid(this.memUuid)
                 .memId(this.memId)
                 .memPw(this.memPw)
                 .memName(this.memName)
@@ -142,8 +142,8 @@ public class MemberEntity {
                 .memNaverEmail(this.memNaverEmail)
                 .memSocialGoogle(this.memSocialGoogle)
                 .memGoogleEmail(this.memGoogleEmail)
-                .memUuidFam(UUID.fromString(this.memUuidFam))
-                .memUuidMgr(UUID.fromString(this.memUuidMgr))
+                .memUuidFam(this.memUuidFam)
+                .memUuidMgr(this.memUuidMgr)
                 .build();
     }
 }
