@@ -14,13 +14,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 public class ChatMessage {
-    private UUID msgId;
+    private String msgId; // UUID -> String
     private String msgSenderRole;
     private String msgContent;
     private Timestamp msgSentAt;
     private String msgSenderUUID;
-    private String conversationId; // 대화 그룹 ID
-    private UUID parentMsgId; // 상위 메시지 ID
+    private String conversationId; // 대화 그룹 ID (작성자 UUID와 동일)
+    private String parentMsgId; // 상위 메시지 ID
 
     public ChatMessageEntity toEntity(){
         return ChatMessageEntity.builder()

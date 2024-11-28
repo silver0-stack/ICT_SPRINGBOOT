@@ -21,7 +21,7 @@ import java.util.UUID;
 public class ChatMessageEntity {
     @Id
     @Column(name = "MSG_ID", nullable = false)
-    private UUID msgId;  // 메시지 ID (PK)
+    private String msgId;  // 메시지 ID (PK)
 
     @Column(name="MSG_SENDER_ROLE", nullable = false)
     private String msgSenderRole; // "user" 또는 "assistant"
@@ -39,7 +39,7 @@ public class ChatMessageEntity {
     private String conversationId; // 대화 그룹 ID (사용자 UUID로 고정)
 
     @Column(name="PARENT_MSG_ID", nullable = true)
-    private UUID parentMsgId; // 부모 메시지 ID (사용자 메시지에 대한 응답인 경우)
+    private String parentMsgId; // 부모 메시지 ID (사용자 메시지에 대한 응답인 경우)
 
 
     // DTO 변환 메서드

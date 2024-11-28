@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.myweb.first.files.member.jpa.entity.MemberFilesEntity;
 import org.myweb.first.member.model.dto.Member;
 
 import java.sql.Date;
@@ -17,7 +18,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * @author <a href="mailto:"
+ * MemberEntity 클래스는 MEMBER 테이블과 매핑되는 JPA 엔터티 클래스입니다.
  */
 @Data  // Lombok을 이용한 Getter, Setter, ToString, Equals, HashCode 자동 생성
 @AllArgsConstructor  // 모든 필드를 인자로 받는 생성자 생성
@@ -113,6 +114,16 @@ public class MemberEntity {
 
     @Column(name = "MEM_UUID_MGR", length = 100)
     private String memUuidMgr; // 담당자 고유 식별자
+
+    // mappedBy = "member" // MemberFilesEntity에서 member 필드가 관계의 주인임을 나타낸다.
+    // cascade = CascadeType.ALL; // 회원 엔터티의 변경 사항이 프로필 사진 엔터티에도 모두 적용되도록 설정
+    // 예를 들어, 회원을 삭제하면 해당 프로필 사진도 자동으로 삭제되도록 함
+    // orphanRemoval = true; 관계가 끊어진 프로필 사진 엔터티는 데이터베이스에서 자동으로 제거됨
+    /*
+Specifying FetchType. LAZY for the non-owning side of the @OneToOne association will not affect the loading.
+The related entity will still be loaded as if the FetchType. EAGER is defined. */
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private MemberFilesEntity profilePicture; // 회원의 프로필 사진 (일대일 관계)
 
 
     /*

@@ -6,9 +6,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Fetch;
 import org.myweb.first.files.member.model.dto.MemberFiles;
 import org.myweb.first.member.jpa.entity.MemberEntity;
 
+
+/**
+ * MemberFilesEntity 클래스는 MEMBER_FILES 테이블과 매핑되는 JPA 엔터티 클래스입니다.
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,10 +25,11 @@ public class MemberFilesEntity {
     @Column(name = "MF_ID", length = 100, nullable = false)
     private String mfId; // 프로필 사진 고유 식별자 (Primary Key)
 
-    // 다수의 프로필 사진이 하나의 회원에 속할 수 있음을 나타냄
-//    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "MF_MEM_UUID", nullable = false)
-    private String mfMemUuid; // 회원 고유 식별자 (Foreign Key)
+    // @JoinColumn: 외래 키 칼럼(MF_MEM_UUID)를 지정하며, unique=true 속성을 추가하여 한 회원당 하나의 프로필 사진만을 가질 수 있도록 한다.
+    // member: 관계의 주인으로 MemberEntity에서 member 필드가 관계를 관리하게 된다.
+    @OneToOne(fetch= FetchType.LAZY)
+    @JoinColumn(name = "MF_MEM_UUID", nullable = false, unique = true)
+    private MemberEntity member; // 회원 고유 식별자 (Foreign Key)
 
     @Column(name = "MF_ORIGINAL_NAME", length = 1000, nullable = false)
     @NotBlank(message = "원본 파일 이름은 필수 입력 항목입니다.")
@@ -36,7 +42,7 @@ public class MemberFilesEntity {
     public MemberFiles toDto(){
         return MemberFiles.builder()
                .mfId(mfId)
-               .mfMemUuid(mfMemUuid)
+               .mfMemUuid(member.getMemUuid())
                .mfOriginalName(mfOriginalName)
                .mfRename(mfRename)
                .build();

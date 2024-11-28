@@ -87,7 +87,7 @@ public class MemberFilesService {
 
             // 프로필 사진 엔터티 생성 및 저장
             MemberFilesEntity memberFilesEntity = MemberFilesEntity.builder()
-                    .mfMemUuid(memberUuid)
+                    .member(member.get())
                     .mfOriginalName(originalName)
                     .mfRename(rename)
                     .build();
@@ -106,24 +106,24 @@ public class MemberFilesService {
      * @param memUuid 회원 UUID
      * @return 성공여부(0, 1)
      */
-    @Transactional
-    public int deleteMemberFile(String memUuid) {
+            @Transactional
+            public int deleteMemberFile(String memUuid) {
 
-        Optional<MemberFilesEntity> memberFiles = memberFilesRepository.findByMember_MemUuid(memUuid);
-        if (memberFiles.isPresent()) {
-            MemberFilesEntity memberFilesEntity = memberFiles.get();
-            // 파일 삭제
-            Path filePath = Paths.get(uploadDir, memberFilesEntity.getMfRename());
-            try {
-                Files.delete(filePath);
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-                e.printStackTrace();
-                return 0;
-            }
+                Optional<MemberFilesEntity> memberFiles = memberFilesRepository.findByMember_MemUuid(memUuid);
+                if (memberFiles.isPresent()) {
+                    MemberFilesEntity memberFilesEntity = memberFiles.get();
+                    // 파일 삭제
+                    Path filePath = Paths.get(uploadDir, memberFilesEntity.getMfRename());
+                    try {
+                        Files.delete(filePath);
+                    } catch (IOException e) {
+                        log.error(e.getMessage(), e);
+                        e.printStackTrace();
+                        return 0;
+                    }
 
-            // 데이터베이스에서 삭제
-            memberFilesRepository.delete(memberFilesEntity);
+                    // 데이터베이스에서 삭제
+                    memberFilesRepository.delete(memberFilesEntity);
             return 1;
         }
 
