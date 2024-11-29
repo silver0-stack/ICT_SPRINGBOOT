@@ -1,7 +1,5 @@
 package org.myweb.first.chat.controller;
 
-import org.myweb.first.chat.jpa.entity.ChatMessageEntity;
-import org.myweb.first.chat.jpa.repository.ChatRepository;
 import org.myweb.first.chat.model.dto.ChatMessage;
 import org.myweb.first.chat.model.service.ChatService;
 import org.myweb.first.common.ApiResponse;
@@ -11,15 +9,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/chat")
 public class ChatController {
     @Autowired
     private ChatService chatService;
-    @Autowired
-    private ChatRepository chatRepository;
 
     // 챗 메시지 저장
     @PostMapping("/save")

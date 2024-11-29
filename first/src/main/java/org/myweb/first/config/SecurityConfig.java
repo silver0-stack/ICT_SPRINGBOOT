@@ -63,6 +63,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // 로그인, 회원가입, ID 체크 엔드포인트에 대한 모든 요청 허용: 인증되지 않은 사용자도 접근할 수 있어야 함
                         .requestMatchers("/api/members/login", "/api/members/enroll", "/api/members/idchk", "/api/members/photo/**").permitAll()
+                        .requestMatchers("/api/profile-pictures/**").permitAll()
                         // GET /api/members/** 엔드포인트는 SENIOR, MANAGER, FAMILY, ADMIN에게 허용
                         .requestMatchers(HttpMethod.GET, "/api/members/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
                         // 그 외의 /api/members/** 엔드포인트(POST, PUT, DELETE 등)는 SENIOR, MANAGER, FAMILY, ADMIN, AI에게 허용
