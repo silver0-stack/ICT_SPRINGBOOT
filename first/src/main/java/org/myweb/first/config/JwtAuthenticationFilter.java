@@ -86,13 +86,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(jwt) && jwtUtil.validateToken(jwt)) {
                 // JWT에서 사용자 ID 및 권한 추출
                 String userId = jwtUtil.extractUserId(jwt);
-                String roles = jwtUtil.extractRoles(jwt);
+                String roles = jwtUtil.extractRoles(jwt); // roles 클레임에서 memType 추출
 
                 logger.debug("Extracted UserId: {}", userId); // 사용자 ID 로그
                 logger.debug("Extracted Roles: {}", roles); // 역할 정보 로그
 
                 if (StringUtils.hasText(userId) && roles != null && !roles.isEmpty()) {
                     // JWT claims에 ROLE_ 접두사가 있어야만 SecurityContextHolder에 인증 정보를 저장할 수 있음
+                    // GrantedAuthority 설정: memType을 ROLE_접두사와 함께 설정
                     List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roles));// ROLE_ 접두사 추가
 
                     // 인증 토큰 생성

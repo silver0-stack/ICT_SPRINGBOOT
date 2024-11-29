@@ -54,13 +54,10 @@ public class MemberFilesService {
      * @throws IOException
      */
     @Transactional
-    public int uploadMemberFiles(String memberUuid, MultipartFile uploadFile) throws IOException {
-        try {
+    public MemberFiles  uploadMemberFiles(String memberUuid, MultipartFile uploadFile) throws IOException {
             // 회원 존재 여부 확인
-            Optional<MemberEntity> member = memberRepository.findByMemUuid(memberUuid);
-            if (member.isEmpty()) {
-                throw new IllegalArgumentException("회원이 존재하지 않습니다.");
-            }
+            MemberEntity member = memberRepository.findByMemUuid(memberUuid)
+                    .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
 
             // 파일 유효성 검사
             if (uploadFile.isEmpty()) {
@@ -83,21 +80,32 @@ public class MemberFilesService {
 
             // 기존 프로필 사진이 있다면 삭제
             Optional<MemberFilesEntity> existingProfile = memberFilesRepository.findByMember_MemUuid(memberUuid);
-            existingProfile.ifPresent(memberFilesRepository::delete);
+            existingProfile.ifPresent(memberFilesEntity -> {
+                // 파일 삭제
+                Path existingFilePath = Paths.get(uploadDir, memberFilesEntity.getMfRename());
+                try{
+                    Files.deleteIfExists(existingFilePath);
+                }catch(IOException e){
+                    log.error("기존 프로필 사진 삭제 실패: {}", e.getMessage(), e);
+                }
+                // 데이터베이스에서 삭제
+                memberFilesRepository.delete(memberFilesEntity);
+            });
+
 
             // 프로필 사진 엔터티 생성 및 저장
             MemberFilesEntity memberFilesEntity = MemberFilesEntity.builder()
-                    .member(member.get())
+                    .member(member)
                     .mfOriginalName(originalName)
                     .mfRename(rename)
                     .build();
-            memberFilesRepository.save(memberFilesEntity).toDto();
-            return 1;
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage(), e);
-            return 0;
-        }
+            MemberFilesEntity savedEntity = memberFilesRepository.save(memberFilesEntity);
+
+            // MemberEntity와 MemberFilesEntity 간의 양방향 관계를 유지하고 있으므로 양쪽 엔터티 모두에서 관계를 설정해야 한다.
+            // MemberEntity에 프로필 사진 설정
+            member.setProfilePicture(savedEntity);
+            memberRepository.save(member);
+            return savedEntity.toDto();
     }
 
 
@@ -124,6 +132,7 @@ public class MemberFilesService {
 
                     // 데이터베이스에서 삭제
                     memberFilesRepository.delete(memberFilesEntity);
+
             return 1;
         }
 

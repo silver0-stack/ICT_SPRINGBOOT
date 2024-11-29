@@ -23,7 +23,7 @@ public class QChatMessageEntity extends EntityPathBase<ChatMessageEntity> {
 
     public final StringPath msgContent = createString("msgContent");
 
-    public final ComparablePath<java.util.UUID> msgId = createComparable("msgId", java.util.UUID.class);
+    public final StringPath msgId = createString("msgId");
 
     public final StringPath msgSenderRole = createString("msgSenderRole");
 
@@ -31,7 +31,7 @@ public class QChatMessageEntity extends EntityPathBase<ChatMessageEntity> {
 
     public final DateTimePath<java.sql.Timestamp> msgSentAt = createDateTime("msgSentAt", java.sql.Timestamp.class);
 
-    public final ComparablePath<java.util.UUID> parentMsgId = createComparable("parentMsgId", java.util.UUID.class);
+    public final StringPath parentMsgId = createString("parentMsgId");
 
     public QChatMessageEntity(String variable) {
         super(ChatMessageEntity.class, forVariable(variable));

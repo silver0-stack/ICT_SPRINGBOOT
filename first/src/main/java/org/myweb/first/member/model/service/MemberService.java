@@ -1,5 +1,6 @@
 package org.myweb.first.member.model.service;
 
+import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,18 +12,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.DynamicUpdate;
 import org.myweb.first.common.Search;
+import org.myweb.first.files.member.model.dto.MemberFiles;
+import org.myweb.first.files.member.model.service.MemberFilesService;
 import org.myweb.first.member.jpa.entity.MemberEntity;
-import org.myweb.first.member.jpa.repository.MemberQueryRepository;
 import org.myweb.first.member.jpa.repository.MemberRepository;
 import org.myweb.first.member.model.dto.Member;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j    //Logger 객체 선언임, 별도의 로그객체 선언 필요없음, 제공되는 레퍼런스는 log 임
 @Service
@@ -31,8 +32,8 @@ import org.springframework.util.StringUtils;
 @DynamicUpdate // 변경된 필드만 업데이트하도록 설정
 public class MemberService {
     private final MemberRepository memberRepository; // 회원 리포지토리
-   // private final MemberQueryRepository memberQueryRepository; // 복잡한 쿼리를 처리하는 리포지토리
     private final BCryptPasswordEncoder passwordEncoder; // 비밀번호 암호화 인코더
+    private final MemberFilesService memberFilesService; // 멤버 파일 서비스
 
     /**
     * 회원 가입 처리 메소드
@@ -40,21 +41,38 @@ public class MemberService {
     * @return 처리 결과 (1: 성공, 0: 실패)
     * */
     @Transactional
-    public int insertMember(Member member) {
+    public int insertMember(Member member, MultipartFile multipartFile) {
         //save() -> 성공시 Entity, 실패시 null 리턴함, JPA 가 제공하는 메소드임
         try {
             // UUID로 PK생성 후 toString()
             member.setMemUuid(UUID.randomUUID().toString());
             // 비밀번호 암호화 로직
             member.setMemPw(passwordEncoder.encode(member.getMemPw()));
-
             MemberEntity memberEntity = member.toEntity();
+            
             // userId 확인
             log.info("Saving MemberEntity with userId: {}", memberEntity.getMemId());
-            memberRepository.save(memberEntity);
+            
+            MemberEntity savedMember=memberRepository.save(memberEntity);
+
+            // 파일 업로드가 있는 경우 처리
+            if(multipartFile != null && !multipartFile.isEmpty()){
+                // 프로필 사진 업로드
+                MemberFiles memberFiles = memberFilesService.uploadMemberFiles(savedMember.getMemUuid(), multipartFile);
+                log.info("Profile picture uploaded successfully for memUuid: {}", savedMember.getMemUuid());
+                // 필요 시, memberEntity에 파일 정보 설정
+                // 예: savedMember.setProfilePicture()
+            }
+
             return 1;
         } catch (DataIntegrityViolationException e) {
             log.error("Insert Member Data Integrity Violation: {}", e.getMessage(), e);
+            return 0;
+        } catch (IllegalArgumentException e) {
+            log.error("Insert Member Illegal Argument: {}", e.getMessage(), e);
+            return 0;
+        } catch (IOException e) {
+            log.error("Insert Member File Upload Error: {}", e.getMessage(), e);
             return 0;
         } catch (Exception e) {
             log.error("Insert Member Error: {}", e.getMessage(), e);
@@ -65,8 +83,8 @@ public class MemberService {
 
     /**
      * 회원 ID로 회원 조회
-     * @param userId
-     * @return
+     * @param memId 회원 ID
+     * @return 회원 정보 DTO의 Optional
      */
     public Optional<Member> selectMember(String memId) {
         Optional<MemberEntity> memberEntityOpt = memberRepository.findByMemId(memId);
@@ -83,7 +101,15 @@ public class MemberService {
     @Transactional
     public int updateMember(Member member) {
         try {
-            // 회원 엔터티로 변환 후 저장
+            // 기존 회원 엔터티 조회
+            Optional<MemberEntity> existingMember = memberRepository.findByMemId(member.getMemId());
+            if(existingMember.isEmpty()){
+                throw new IllegalArgumentException("수정할 회원이 존재하지 않습니다.");
+            }
+            // 비밀번호 변경이 있는 경우
+            if (member.getMemPw() != null && !member.getMemPw().isEmpty()) {
+                member.setMemPw(passwordEncoder.encode(member.getMemPw()));
+            }
             memberRepository.save(member.toEntity()).toDto();
             // 성공
             return 1;
@@ -95,22 +121,34 @@ public class MemberService {
         }
     }
 
+    /**
+     * 회원 삭제 메소드
+     * @param memUuid 회원 UUID
+     * @return 처리 결과 (1: 성공, 0: 실패)
+     */
     @Transactional
     public int deleteMember(String memUuid) {
         try {   //리턴 타입을 int 로 맞추기 위해서 처리함
             if(memberRepository.existsById(memUuid)){
                 memberRepository.deleteById(memUuid);
+                log.info("Deleted member with memUuid: {}", memUuid);
                 return 1;
+            }else{
+                log.warn("Attempted to delete non-existing member with memUuid: {}", memUuid);
+                return 0;
             }
         } catch (Exception e) {
-            log.error("Delete Member Error: {}", e.getMessage());
+            log.error("Delete Member Error: {}", e.getMessage(), e);
             e.printStackTrace();
             return 0;
         }
-        return 0;
     }
 
-    // ID 중복 체크
+    /**
+     * 회원 ID 중복 체크
+     * @param memId 회원 ID
+     * @return 존재 여부 (1: 존재, 0: 존재하지 않음)
+     */
     public int selectCheckId(String memId) {
         return memberRepository.existsById(memId) ? 1 : 0;    //jpa가 제공하는 existsById 메소드 사용
     }

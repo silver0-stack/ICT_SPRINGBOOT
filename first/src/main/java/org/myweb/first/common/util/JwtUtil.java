@@ -57,13 +57,13 @@ public class JwtUtil {
     /**
      * Access Token 생성 메소드: 사용자 ID와 역할 정보를 포함
      * @param userId 사용자 ID
-     * @param roles 사용자 역할
+     * @param memType 사용자 역할
      * @return 생성된 JWT 토큰
      */
-    public String generateAccessToken(String userId, String roles) {
+    public String generateAccessToken(String userId, String memType) {
         return Jwts.builder() // JWT 토큰 빌더 생성
                 .setSubject(userId) // 토큰의 주제 설정 (사용자 ID)
-                .claim("roles", roles) // 사용자 역할 클레임 추가
+                .claim("roles", memType) // memType을 roles 클레임으로 설정
                 .setIssuedAt(new Date()) // 토큰 발급 시간을 현재 시간으로 설정
                 .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_TIME)) // 토큰 만료 시간 설정: 현재 시간 + Access Token 만료 시간(1일)
                 .signWith(key, SignatureAlgorithm.HS256) // 비밀키와 HMAC SHA-256 알고리즘으로 토큰에 사명하여 토큰의 무결성과 신뢰성을 보장한다.
@@ -73,13 +73,13 @@ public class JwtUtil {
     /**
      * Refresh Token 생성 메소드: 사용자 ID와 역할 정보를 포함
      * @param userId 사용자 ID
-     * @param roles 사용자 역할
+     * @param memType 사용자 역할
      * @return 생성된 Refresh Token
      */
-    public String generateRefreshToken(String userId, String roles) {
+    public String generateRefreshToken(String userId, String memType) {
         return Jwts.builder()
                 .setSubject(userId) // 토큰의 주제 설정 (사용자 ID)
-                .claim("roles", roles) // 사용자 역할 클레임 추가
+                .claim("roles", memType) // memType을 roles 클레임으로 설정
                 .setIssuedAt(new Date()) // 토큰 발급 시간을 현재 시간으로 설정
                 .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION_TIME)) // Refresh Token 만료 시간 설정
                 .signWith(key, SignatureAlgorithm.HS256) // 비밀키와 HMAC SHA-256 알고리즘으로 토큰 서명
