@@ -8,6 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.GenerationTime;
 import org.myweb.first.files.member.jpa.entity.MemberFilesEntity;
 import org.myweb.first.member.model.dto.Member;
 
@@ -28,13 +31,13 @@ import java.util.UUID;
 @Entity //JPA 엔터티로 등록
 public class MemberEntity {
     @Id
-    @Column(name = "MEM_UUID", length = 100, nullable = false)
+    @Column(name = "MEM_UUID", updatable = false, length =36, nullable = false)
     private String memUuid; // 회원 고유 식별자 (Primary Key)
 
     @Column(name = "MEM_ID", length = 50, unique = true)
     private String memId; // 회원 아이디
 
-    @Column(name = "MEM_PW", length = 50, nullable = false)
+    @Column(name = "MEM_PW", length = 1000, nullable = false)
     @NotBlank(message = "비밀번호는 필수 입력 항목입니다.")
     private String memPw; // 회원 비밀번호
 
@@ -75,7 +78,10 @@ public class MemberEntity {
     @Pattern(regexp = "ACTIVE|BLOCKED|INACTIVE|REMOVED", message = "MEM_STATUS는 'ACTIVE', 'BLOCKED', 'INACTIVE', 'REMOVED' 중 하나여야 합니다.")
     private String memStatus; // 회원 상태
 
-    @Column(name = "MEM_ENROLL_DATE", nullable = false, updatable = false, insertable = false, columnDefinition = "TIMESTAMP DEFAULT SYSDATE")
+    
+    // JPA에게 이 필드가 데이터베이스에 의해 생성됨을 알리고 저장 후 값을 가져오도록 지시함
+    @Generated(GenerationTime.INSERT)
+    @Column(name = "MEM_ENROLL_DATE", updatable = false, insertable = false)
     private Timestamp memEnrollDate; // 가입일자
 
     @Column(name = "MEM_CHANGE_STATUS", columnDefinition = "TIMESTAMP DEFAULT SYSDATE")
@@ -85,7 +91,7 @@ public class MemberEntity {
     @Pattern(regexp = "Y|N", message = "MEM_FAMILY_APPROVAL은 'Y' 또는 'N'이어야 합니다.")
     private String memFamilyApproval; // 가족계정 승인여부
 
-    @Column(name = "MEM_SOCIAL_KAKAO", length = 1, nullable = false, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "MEM_SOCIAL_KAKAO", length = 1,  columnDefinition = "CHAR(1) DEFAULT 'N'")
     @Pattern(regexp = "Y|N", message = "MEM_SOCIAL_KAKAO는 'Y' 또는 'N'이어야 합니다.")
     private String memSocialKakao; // 소셜연동 KAKAO
 
@@ -93,7 +99,7 @@ public class MemberEntity {
     @Email(message = "유효한 KAKAO 이메일 형식이어야 합니다.")
     private String memKakaoEmail; // KAKAO 이메일
 
-    @Column(name = "MEM_SOCIAL_NAVER", length = 1, nullable = false, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "MEM_SOCIAL_NAVER", length = 1, columnDefinition = "CHAR(1) DEFAULT 'N'")
     @Pattern(regexp = "Y|N", message = "MEM_SOCIAL_NAVER는 'Y' 또는 'N'이어야 합니다.")
     private String memSocialNaver; // 소셜연동 NAVER
 
@@ -101,7 +107,7 @@ public class MemberEntity {
     @Email(message = "유효한 NAVER 이메일 형식이어야 합니다.")
     private String memNaverEmail; // NAVER 이메일
 
-    @Column(name = "MEM_SOCIAL_GOOGLE", length = 1, nullable = false, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "MEM_SOCIAL_GOOGLE", length = 1, columnDefinition = "CHAR(1) DEFAULT 'N'")
     @Pattern(regexp = "Y|N", message = "MEM_SOCIAL_GOOGLE는 'Y' 또는 'N'이어야 합니다.")
     private String memSocialGoogle; // 소셜연동 GOOGLE
 
@@ -109,10 +115,10 @@ public class MemberEntity {
     @Email(message = "유효한 GOOGLE 이메일 형식이어야 합니다.")
     private String memGoogleEmail; // GOOGLE 이메일
 
-    @Column(name = "MEM_UUID_FAM", length = 100)
+    @Column(name = "MEM_UUID_FAM", length = 36)
     private String memUuidFam; // 가족 고유 식별자
 
-    @Column(name = "MEM_UUID_MGR", length = 100)
+    @Column(name = "MEM_UUID_MGR", length = 36)
     private String memUuidMgr; // 담당자 고유 식별자
 
     // mappedBy = "member" // MemberFilesEntity에서 member 필드가 관계의 주인임을 나타낸다.
@@ -125,6 +131,18 @@ The related entity will still be loaded as if the FetchType. EAGER is defined. *
     @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private MemberFilesEntity profilePicture; // 회원의 프로필 사진 (일대일 관계)
 
+    @PrePersist
+    public void generateUuid(){
+        if(this.memUuid == null){
+            this.memUuid = UUID.randomUUID().toString();
+        }
+        if (this.memStatus == null) {
+            this.memStatus = "ACTIVE";
+        }
+        if (this.memFamilyApproval == null) {
+            this.memFamilyApproval = "N";
+        }
+    }
 
     /*
      * 엔터티를 DTO로 변환하는 메소드

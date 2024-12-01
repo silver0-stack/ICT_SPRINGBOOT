@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Fetch;
 import org.myweb.first.files.member.model.dto.MemberFiles;
 import org.myweb.first.member.jpa.entity.MemberEntity;
 

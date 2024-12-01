@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder // 필더 패턴 지원
 public class User implements java.io.Serializable {
-	private String userId; //USERID	VARCHAR2(15 BYTE)
-	private String userPwd; //USERPWD	VARCHAR2(100 BYTE)
-	private String userName; //USERNAME	VARCHAR2(20 BYTE)
+	private String memId; //USERID	VARCHAR2(15 BYTE)
+	private String memPw; //USERPWD	VARCHAR2(100 BYTE)
+	private String memName; //USERNAME	VARCHAR2(20 BYTE)
 }

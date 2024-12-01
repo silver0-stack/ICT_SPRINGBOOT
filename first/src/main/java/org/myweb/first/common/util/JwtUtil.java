@@ -56,7 +56,7 @@ public class JwtUtil {
 
     /**
      * Access Token 생성 메소드: 사용자 ID와 역할 정보를 포함
-     * @param userId 사용자 ID
+     * @param userId 사용자 UUID
      * @param memType 사용자 역할
      * @return 생성된 JWT 토큰
      */

@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /*
@@ -64,23 +65,23 @@ public class MemberController {
     public ResponseEntity<ApiResponse<LoginResponse>> loginMethod(@RequestBody User user) {
         log.info("Login attempt: {}", user); // 로그인 시도 로그
 
-        Optional<Member> loginUser = memberService.selectMember(user.getUserId());
+        Optional<Member> loginUser = memberService.selectMember(user.getMemId());
 
         // 회원 정보가 존재하고, 비밀번호가 일치하는지 확인
         if (loginUser.isPresent()
-                && StringUtils.hasText(user.getUserPwd())
-                && memberService.matchesPassword(user.getUserPwd(), loginUser.get().getMemPw())) {
+                && StringUtils.hasText(user.getMemPw())
+                && memberService.matchesPassword(user.getMemPw(), loginUser.get().getMemPw())) {
             String memType = loginUser.get().getMemType(); // memType 필드 가져오기
             log.debug("User memType: {}", memType);
 
             // Access Token 생성
-            String accessToken = jwtUtil.generateAccessToken(user.getUserId(), memType);
+            String accessToken = jwtUtil.generateAccessToken(loginUser.get().getMemUuid(), memType);
 
             // Refresh Token 생성
-            String refreshToken = jwtUtil.generateRefreshToken(user.getUserId(), memType);
+            String refreshToken = jwtUtil.generateRefreshToken(loginUser.get().getMemUuid(), memType);
 
             // Refresh Token 저장
-            refreshTokenService.storedRefreshToken(user.getUserId(), refreshToken);
+            refreshTokenService.storedRefreshToken(loginUser.get().getMemUuid(), refreshToken);
 
             // 로그인 응답 DTO 생성
             LoginResponse loginResponse = LoginResponse.builder()
@@ -268,6 +269,8 @@ public class MemberController {
         log.info("Final member data: {}", member); // 최종 회원 데이터 로그
 
         // 회원가입 처리
+        // 엔터티에서 @PrePersist로 대체
+        //member.setMemUuid(UUID.randomUUID().toString());
         int result = memberService.insertMember(member, mfile);
         if (result > 0) {
             // 성공 응답 생성

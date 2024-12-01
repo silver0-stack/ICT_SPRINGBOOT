@@ -65,22 +65,27 @@ public class Member {
 
     public MemberEntity toEntity() {
         return MemberEntity.builder()
-               .memUuid(String.valueOf(this.memUuid))
-               .memId(this.memId)
-               .memPw(this.memPw)
-               .memName(this.memName)
-               .memType(this.memType)
-               .memEmail(this.memEmail)
-               .memAddress(this.memAddress)
-               .memCellphone(this.memCellphone)
-               .memPhone(this.memPhone)
-               .memRnn(this.memRnn)
-               .memGovCode(this.memGovCode)
-               .memStatus(this.memStatus)
-               .memEnrollDate(this.memEnrollDate)
-               .memChangeStatus(this.memChangeStatus)
-               .memFamilyApproval(this.memFamilyApproval)
-               .memSocialKakao(this.memSocialKakao)
+                //.memUuid(this.memUuid) // UUID는 @PrePersist에서 자동 생성되므로 포함되지 않음
+                .memId(this.memId)
+                .memPw(this.memPw)
+                .memName(this.memName)
+                .memType(this.memType)
+                .memEmail(this.memEmail)
+                .memAddress(this.memAddress)
+                .memCellphone(this.memCellphone)
+                .memPhone(this.memPhone)
+                .memRnn(this.memRnn)
+                .memGovCode(this.memGovCode)
+                .memStatus(this.memStatus != null ? this.memStatus : "ACTIVE") // 기본값 설정
+                .memFamilyApproval(this.memFamilyApproval != null ? this.memFamilyApproval : "N")
+                .memSocialKakao(this.memSocialKakao != null ? this.memSocialKakao : "N")
+                .memSocialNaver(this.memSocialNaver != null ? this.memSocialNaver : "N")
+                .memSocialGoogle(this.memSocialGoogle != null ? this.memSocialGoogle : "N")
+                .memKakaoEmail(this.memKakaoEmail)
+                .memNaverEmail(this.memNaverEmail)
+                .memGoogleEmail(this.memGoogleEmail)
+                .memUuidFam(this.memUuidFam)
+                .memUuidMgr(this.memUuidMgr)
                 .build();
     }
 }
