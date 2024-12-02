@@ -35,11 +35,18 @@ public class ChatMessageEntity {
     @Column(name = "MSG_SENDER_UUID", nullable = false, length = 50)
     private String msgSenderUUID;  // 작성자 UUID (FK)
 
-    @Column(name = "CONVERSATION_ID", nullable = false, length = 50)
-    private String conversationId; // 대화 그룹 ID (사용자 UUID로 고정)
 
-    @Column(name="PARENT_MSG_ID", nullable = true)
+    @Column(name = "MSG_TYPE", nullable = false)
+    private String msgType; // 'T' OR 'V'
+
+
+    @Column(name="PARENT_MSG_ID")
     private String parentMsgId; // 부모 메시지 ID (사용자 메시지에 대한 응답인 경우)
+
+
+    @Column(name="MSG_WORKSPACE_ID", nullable = false)
+    private String msgWorkspaceId; // 해당 워크스페이스 ID
+
 
 
     // DTO 변환 메서드

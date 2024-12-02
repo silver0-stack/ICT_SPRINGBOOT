@@ -75,13 +75,13 @@ public class MemberController {
             log.debug("User memType: {}", memType);
 
             // Access Token 생성
-            String accessToken = jwtUtil.generateAccessToken(loginUser.get().getMemUuid(), memType);
+            String accessToken = jwtUtil.generateAccessToken(loginUser.get().getMemName(), memType);
 
             // Refresh Token 생성
-            String refreshToken = jwtUtil.generateRefreshToken(loginUser.get().getMemUuid(), memType);
+            String refreshToken = jwtUtil.generateRefreshToken(loginUser.get().getMemName(), memType);
 
             // Refresh Token 저장
-            refreshTokenService.storedRefreshToken(loginUser.get().getMemUuid(), refreshToken);
+            refreshTokenService.storedRefreshToken(loginUser.get().getMemName(), refreshToken);
 
             // 로그인 응답 DTO 생성
             LoginResponse loginResponse = LoginResponse.builder()

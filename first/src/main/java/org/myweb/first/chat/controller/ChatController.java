@@ -12,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/chat")
+@CrossOrigin(origins = "*") // CORS 설정 (보안을 위해 필요한 대로 설정하기)
 public class ChatController {
     @Autowired
     private ChatService chatService;

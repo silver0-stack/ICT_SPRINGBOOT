@@ -15,6 +15,7 @@ import org.myweb.first.common.Search;
 import org.myweb.first.files.member.model.dto.MemberFiles;
 import org.myweb.first.files.member.model.service.MemberFilesService;
 import org.myweb.first.member.jpa.entity.MemberEntity;
+//import org.myweb.first.member.jpa.repository.MemberQueryRepositoryImpl;
 import org.myweb.first.member.jpa.repository.MemberRepository;
 import org.myweb.first.member.model.dto.Member;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -35,6 +36,7 @@ public class MemberService {
     private final MemberRepository memberRepository; // 회원 리포지토리
     private final BCryptPasswordEncoder passwordEncoder; // 비밀번호 암호화 인코더
     private final MemberFilesService memberFilesService; // 멤버 파일 서비스
+//    private final MemberQueryRepositoryImpl memberQueryRepository;
 
     /**
      * 회원 가입 처리 메소드

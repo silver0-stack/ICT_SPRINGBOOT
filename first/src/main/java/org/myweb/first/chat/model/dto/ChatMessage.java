@@ -19,8 +19,9 @@ public class ChatMessage {
     private String msgContent;
     private Timestamp msgSentAt;
     private String msgSenderUUID;
-    private String conversationId; // 대화 그룹 ID (작성자 UUID와 동일)
+    private String msgType; // T(EXT) or V(OICE)
     private String parentMsgId; // 상위 메시지 ID
+    private String msgWorkspaceId; // 해당 워크스페이스 ID
 
     public ChatMessageEntity toEntity(){
         return ChatMessageEntity.builder()
@@ -29,8 +30,9 @@ public class ChatMessage {
                 .msgContent(this.msgContent)
                 .msgSentAt(this.msgSentAt)
                 .msgSenderUUID(this.msgSenderUUID)
-                .conversationId(this.conversationId)
+                .msgType(this.msgType)
                 .parentMsgId(this.parentMsgId)
+                .msgWorkspaceId(this.msgWorkspaceId)
                 .build();
     }
 }

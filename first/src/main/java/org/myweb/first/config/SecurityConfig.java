@@ -66,7 +66,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/profile-pictures/**").permitAll()
 
                         // /api/chat/save 엔드포인트에 대한 POST 요청 허용
-                        .requestMatchers(HttpMethod.POST, "/api/chat/save").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/chat/save").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
 
                         // GET /api/members/** 엔드포인트는 SENIOR, MANAGER, FAMILY, ADMIN에게 허용
                         .requestMatchers(HttpMethod.GET, "/api/members/**", "/api/chat/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
@@ -74,6 +74,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/members/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger UI 접근 허용
                         // 그 외 모든 명시하지 않은 요청은 인증된 사용자이기만 하면 접근 가능: 보안강화를 위해 기본적으로 모든 요청에 대해 인증 요구
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 // JWT 필터 추가: Spring Security의 기본 인증 필터 전에 JwtAuthenticationFilter를 실행한다.: 인증 과정에서 JWT 토큰을 먼저 처리하게 됨
