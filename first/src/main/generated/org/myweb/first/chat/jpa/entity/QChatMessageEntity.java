@@ -19,8 +19,6 @@ public class QChatMessageEntity extends EntityPathBase<ChatMessageEntity> {
 
     public static final QChatMessageEntity chatMessageEntity = new QChatMessageEntity("chatMessageEntity");
 
-    public final StringPath conversationId = createString("conversationId");
-
     public final StringPath msgContent = createString("msgContent");
 
     public final StringPath msgId = createString("msgId");
@@ -30,6 +28,10 @@ public class QChatMessageEntity extends EntityPathBase<ChatMessageEntity> {
     public final StringPath msgSenderUUID = createString("msgSenderUUID");
 
     public final DateTimePath<java.sql.Timestamp> msgSentAt = createDateTime("msgSentAt", java.sql.Timestamp.class);
+
+    public final StringPath msgType = createString("msgType");
+
+    public final StringPath msgWorkspaceId = createString("msgWorkspaceId");
 
     public final StringPath parentMsgId = createString("parentMsgId");
 

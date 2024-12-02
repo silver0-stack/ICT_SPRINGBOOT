@@ -48,7 +48,6 @@ public class ChatMessageEntity {
     private String msgWorkspaceId; // 해당 워크스페이스 ID
 
 
-
     // DTO 변환 메서드
     public ChatMessage toDto() {
         return ChatMessage.builder()
@@ -57,8 +56,9 @@ public class ChatMessageEntity {
                 .msgContent(this.msgContent)
                 .msgSentAt(this.msgSentAt)
                 .msgSenderUUID(this.msgSenderUUID)
-                .conversationId(this.conversationId)
+                .msgType(this.msgType)
                 .parentMsgId(this.parentMsgId)
+                .msgWorkspaceId(this.msgWorkspaceId)
                 .build();
     }
 }

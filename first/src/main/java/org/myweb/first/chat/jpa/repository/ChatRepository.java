@@ -12,6 +12,6 @@ import java.util.UUID;
 
 @Repository
 public interface ChatRepository extends JpaRepository<ChatMessageEntity, String> {
-    @Query("SELECT c FROM ChatMessageEntity c WHERE c.conversationId = :conversationId ORDER BY c.msgSentAt ASC")
-    List<ChatMessageEntity> findAllByConversationId(@Param("conversationId") String conversationId);
+    @Query("SELECT c FROM ChatMessageEntity c WHERE c.msgWorkspaceId = :msgWorkspaceId ORDER BY c.msgSentAt ASC")
+    List<ChatMessageEntity> findAllByMsgWorkspaceId(@Param("msgWorkspaceId") String msgWorkspaceId);
 }

@@ -41,10 +41,10 @@ public class ChatController {
     }
 
     // 챗 메세지 조회
-    @GetMapping("/history/{userId}")
-    public ResponseEntity<ApiResponse<List<ChatMessage>>> getChatHistory(@PathVariable String userId) {
+    @GetMapping("/history/{workspaceId}")
+    public ResponseEntity<ApiResponse<List<ChatMessage>>> getChatHistory(@PathVariable String workspaceId) {
         try {
-            List<ChatMessage> history = chatService.getChatHistory(userId);
+            List<ChatMessage> history = chatService.getChatHistory(workspaceId);
             if (!history.isEmpty()) {
                 ApiResponse<List<ChatMessage>> response = ApiResponse.<List<ChatMessage>>builder()
                         .success(true)
