@@ -43,9 +43,14 @@ public class NoticeService {
         return noticeRepository.findById(noticeId);
     }
 
-    // 공지사항 추가
-    public NoticeEntity createNotice(NoticeEntity noticeEntity){
-        return noticeRepository.save(noticeEntity);
+
+    // 공지사항 조회 (조회수 증가 포함)
+    public NoticeEntity getNoticeById(String noticeId){
+        Optional<NoticeEntity> optionalNotice = noticeRepository.findById(noticeId);
+        if(optionalNotice.isEmpty()){
+            throw new IllegalArgumentException("공지사항을 찾을 수 없습니다.");
+        }
+
     }
 
     // 공지사항 업데이트
@@ -92,18 +97,6 @@ public class NoticeService {
 	}
 
 
-	@Transactional
-	public Notice updateAddReadCount(String noticeId) {
-		Optional<NoticeEntity> entity = noticeRepository.findById(noticeId);
-        if(entity.isPresent()){
-            NoticeEntity noticeEntity = entity.get();
-            log.info("addReadCount : {}" , noticeEntity);
-            noticeEntity.setNotReadCount(noticeEntity.getNotReadCount() + 1);
-            return noticeRepository.save(noticeEntity).toDto();	//jpa가 제공
-
-        }
-        return null;
-	}
 
 	//로직을 단계별로 처리한 코드 ------------------------------------------
 	/*public ArrayList<Notice> selectList(Pageable pageable) {
