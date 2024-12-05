@@ -37,6 +37,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 @Slf4j    //log 객체 선언임, 별도의 로그객체 선언 필요없음, 제공되는 레퍼런스는 log 임
 @RestController
+@RequestMapping("/api/notices")
 public class NoticeController {
 	@Autowired
 	private NoticeService noticeService;
