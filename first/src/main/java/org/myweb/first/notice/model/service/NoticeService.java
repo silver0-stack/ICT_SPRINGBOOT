@@ -20,7 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j	//Logger 객체 선언임, 별도의 로그객체 선언 필요없음, 제공되는 레퍼런스는 log 임
+@Slf4j    //Logger 객체 선언임, 별도의 로그객체 선언 필요없음, 제공되는 레퍼런스는 log 임
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,77 +28,87 @@ public class NoticeService {
     @Autowired
     private NoticeRepository noticeRepository;
 
-
     //JPA 제공 메소드로 해결하지 못하는 SQL 문 처리를 위한 별도의 리포지터리
-	//상속, 재구현 없는 형식
-	//private final NoticeQueryRepository noticeQueryRepository;
+    //상속, 재구현 없는 형식
+    //private final NoticeQueryRepository noticeQueryRepository;
 
-    // 페이징 처리된 공지사항 목록 조회
-    public Page<NoticeEntity> getNoticeWithPagination(Pageable pageable){
-        return noticeRepository.findAll(pageable);
+    /**
+     * 페이징 처리된 공지사항 목록 조회
+     *
+     * @param pageable
+     * @return
+     */
+    public Page<Notice> getNoticeWithPagination(Pageable pageable) {
+        Page<NoticeEntity> entityPage = noticeRepository.findAll(pageable);
+        return entityPage.map(NoticeEntity::toDto);
     }
 
-    // 특정 공지사항 존재 여부 확인
-    public Optional<NoticeEntity> getNoticeById(String noticeId){
-        return noticeRepository.findById(noticeId);
-    }
 
-
-    // 공지사항 조회 (조회수 증가 포함)
-    public NoticeEntity getNoticeById(String noticeId){
+    /**
+     * 공지사항 조회 (조회수 증가 포함)
+     * @param noticeId
+     * @return
+     */
+    public Notice getNoticeById(String noticeId) {
         Optional<NoticeEntity> optionalNotice = noticeRepository.findById(noticeId);
-        if(optionalNotice.isEmpty()){
+        if (optionalNotice.isEmpty()) {
             throw new IllegalArgumentException("공지사항을 찾을 수 없습니다.");
         }
+        NoticeEntity notice = optionalNotice.get();
 
+        // 조회수 증가
+        notice.setNotReadCount(notice.getNotReadCount() + 1);
+
+        // 저장
+        noticeRepository.save(notice);
+
+        return notice.toDto();
     }
 
     // 공지사항 업데이트
-    public NoticeEntity updateNotice(String noticeId, NoticeEntity updatedNotice){
+    public Notice updateNotice(String noticeId, Notice updatedNotice) {
         Optional<NoticeEntity> optionalNotice = noticeRepository.findById(noticeId);
-        if(optionalNotice.isPresent()){
-            // 수정 전의 공지사항 엔터티
-            NoticeEntity oldNotice = optionalNotice.get();
-            if (updatedNotice.getNotTitle() != null) {
-                oldNotice.setNotTitle(updatedNotice.getNotTitle());
-            }
-            if (updatedNotice.getNotContent() != null) {
-                oldNotice.setNotContent(updatedNotice.getNotContent());
-            }
-            if (updatedNotice.getNotUpdatedBy() != null) {
-                oldNotice.setNotUpdatedBy(updatedNotice.getNotUpdatedBy());
-            }
-            oldNotice.setNotUpdatedAt(new Timestamp(System.currentTimeMillis()));
-            // 수정된 공지사항 엔터티를 DB에 저장
-            return noticeRepository.save(oldNotice);
+        if (optionalNotice.isEmpty()) {
+            throw new IllegalArgumentException("공지사항을 찾을 수 없습니다.");
         }
-        return null;
+        // 수정 전의 공지사항 엔터티
+        NoticeEntity oldNotice = optionalNotice.get();
+        if (updatedNotice.getNotTitle() != null) {
+            oldNotice.setNotTitle(updatedNotice.getNotTitle());
+        }
+        if (updatedNotice.getNotContent() != null) {
+            oldNotice.setNotContent(updatedNotice.getNotContent());
+        }
+        if (updatedNotice.getNotUpdatedBy() != null) {
+            oldNotice.setNotUpdatedBy(updatedNotice.getNotUpdatedBy());
+        }
+        oldNotice.setNotUpdatedAt(new Timestamp(System.currentTimeMillis()));
+        // 수정된 공지사항 엔터티를 DB에 저장
+        NoticeEntity newNotice =  noticeRepository.save(oldNotice);
+        return newNotice.toDto(); // DTO로 반환
     }
 
 
     // 공지사항 삭제
-    public void deleteNotice(String noticeId){
+    public void deleteNotice(String noticeId) {
         noticeRepository.deleteById(noticeId);
     }
 
 
-	public ArrayList<Notice> selectTop3() {
-		//jpa 가 제공하는 메소드 사용한다면
-		//최근 공지글 3개 조회이므로, 공지번호 기준 내림차순정렬해서 상위 3개 추출함
-		//findAll(Sort.by(Sort.Direction.DESC, "noticeNo")) : List<NoticeEntity>
-		List<NoticeEntity> entityList = noticeRepository.findAll(Sort.by(Sort.Direction.DESC, "noticeNo"));
-		//select * from notice order by noticeno desc : 쿼리문 실행될 것임
-		//3개만 추출함
-		ArrayList<Notice> list = new ArrayList<>();
-		for(int index = 0; index < 3; index++){
-			list.add(entityList.get(index).toDto());
-		}
-		return list;
-	}
+    /**
+     * 최근 공지사항 3개 조회
+     * @return
+     */
+    public List<Notice> getTop3Notices() {
+      List<NoticeEntity> entityList = noticeRepository.findAll(Sort.by(Sort.Direction.DESC, "notCreatedAt"));
+      return entityList.stream()
+              .limit(3)
+              .map(NoticeEntity::toDto)
+              .toList();
+    }
 
 
-
-	//로직을 단계별로 처리한 코드 ------------------------------------------
+    //로직을 단계별로 처리한 코드 ------------------------------------------
 	/*public ArrayList<Notice> selectList(Pageable pageable) {
 		//jpa 제공 메소드 사용
 		//findAll() : Entity 반환됨 => select * from notice 쿼리 자동 실행됨
@@ -115,8 +125,7 @@ public class NoticeService {
 	}*/
 
 
-
-	//검색용 메소드 --------------------------------------------------------
+    //검색용 메소드 --------------------------------------------------------
 //	public ArrayList<Notice> selectSearchTitle(String keyword, Pageable pageable) {
 //		return toList(noticeQueryRepository.findSearchTitle(keyword, pageable));
 //	}

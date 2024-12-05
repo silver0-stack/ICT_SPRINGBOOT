@@ -1,4 +1,3 @@
-TIL-241111.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
