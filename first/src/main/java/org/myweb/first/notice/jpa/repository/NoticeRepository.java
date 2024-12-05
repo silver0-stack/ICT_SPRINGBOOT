@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 //MyBatis 의 SqlSession 과 같은 역할을 수행함. Mapper 인터페이스와 같음
 
 @Repository
-public interface NoticeRepository extends JpaRepository<NoticeEntity, Integer> {
+public interface NoticeRepository extends JpaRepository<NoticeEntity, String> {
     //jpa 가 제공하는 기본 메소드를 사용할 수 있게 됨
 
 }

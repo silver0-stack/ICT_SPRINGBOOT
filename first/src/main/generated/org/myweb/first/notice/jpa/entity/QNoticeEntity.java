@@ -19,25 +19,25 @@ public class QNoticeEntity extends EntityPathBase<NoticeEntity> {
 
     public static final QNoticeEntity noticeEntity = new QNoticeEntity("noticeEntity");
 
-    public final DatePath<java.sql.Date> impEndDate = createDate("impEndDate", java.sql.Date.class);
+    public final StringPath notContent = createString("notContent");
 
-    public final StringPath importance = createString("importance");
+    public final DateTimePath<java.sql.Timestamp> notCreatedAt = createDateTime("notCreatedAt", java.sql.Timestamp.class);
 
-    public final StringPath noticeContent = createString("noticeContent");
+    public final StringPath notCreatedBy = createString("notCreatedBy");
 
-    public final DatePath<java.sql.Date> noticeDate = createDate("noticeDate", java.sql.Date.class);
+    public final DateTimePath<java.sql.Timestamp> notDeletedAt = createDateTime("notDeletedAt", java.sql.Timestamp.class);
 
-    public final NumberPath<Integer> noticeNo = createNumber("noticeNo", Integer.class);
+    public final StringPath notDeletedBy = createString("notDeletedBy");
 
-    public final StringPath noticeTitle = createString("noticeTitle");
+    public final StringPath notId = createString("notId");
 
-    public final StringPath noticeWriter = createString("noticeWriter");
+    public final NumberPath<Integer> notReadCount = createNumber("notReadCount", Integer.class);
 
-    public final StringPath originalFilePath = createString("originalFilePath");
+    public final StringPath notTitle = createString("notTitle");
 
-    public final NumberPath<Integer> readCount = createNumber("readCount", Integer.class);
+    public final DateTimePath<java.sql.Timestamp> notUpdatedAt = createDateTime("notUpdatedAt", java.sql.Timestamp.class);
 
-    public final StringPath renameFilePath = createString("renameFilePath");
+    public final StringPath notUpdatedBy = createString("notUpdatedBy");
 
     public QNoticeEntity(String variable) {
         super(NoticeEntity.class, forVariable(variable));
