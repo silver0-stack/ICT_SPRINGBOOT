@@ -10,6 +10,7 @@ import org.myweb.first.notice.model.dto.Notice;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.GregorianCalendar;
+import java.util.UUID;
 
 //테이블 생성에 대한 가이드 클래스임
 //@Entity 어노테이션 반드시 표시함 => 설정정보에 자동 등록됨 => Repository 와 연결됨
@@ -56,7 +57,12 @@ public class NoticeEntity {
     //jpa 로 넘어가기 전(sql 에 적용하기 전)에 작동된다는 어노테이션임
     @PrePersist
     public void prePersist(){
+        // @PrePersist를 활용해 persist() 호출 전에 notId가 없으면 UUID를 생성해 설정
+        if(notId == null || notId.isEmpty()){
+            notId = UUID.randomUUID().toString(); // UUID를 기본 키로 자동 생성
+        }
         notCreatedAt = new Timestamp(System.currentTimeMillis());
+        notUpdatedAt = new Timestamp(System.currentTimeMillis());
     }
 
     public Notice toDto() {

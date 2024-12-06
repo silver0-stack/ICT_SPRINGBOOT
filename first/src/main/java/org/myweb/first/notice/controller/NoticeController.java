@@ -42,6 +42,24 @@ public class NoticeController {
 	@Autowired
 	private NoticeService noticeService;
 
+    @PostMapping
+    public ResponseEntity<ApiResponse<Notice>> createNotice(@RequestBody Notice newNotice){
+        try {
+            Notice createdNotice = noticeService.createNotice(newNotice);
+            ApiResponse<Notice> response = ApiResponse.<Notice>builder()
+                    .success(true)
+                    .message("공지 등록 성공")
+                    .data(createdNotice)
+                    .build();
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<Notice> response = ApiResponse.<Notice>builder()
+                    .success(false)
+                    .message("공지 등록 실패: " + e.getMessage())
+                    .build();
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
     @GetMapping
     public ResponseEntity<ApiResponse<Page<Notice>>> getNoticeList(Pageable pageable){
         try{
@@ -67,8 +85,13 @@ public class NoticeController {
      * @return
      */
     @GetMapping("/{notId}")
-    public ResponseEntity<ApiResponse<Notice>> getNoticeById(@PathVariable String notId){
+    public ResponseEntity<ApiResponse<Notice>> getNoticeById(HttpServletRequest request, @PathVariable String notId){
         try{
+            // OPTIONS 요청 무시
+            if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                return ResponseEntity.ok().build();
+            }
+
             Notice noticeEntity = noticeService.getNoticeById(notId);
             ApiResponse<Notice> response = ApiResponse.<Notice>builder()
                     .success(true)

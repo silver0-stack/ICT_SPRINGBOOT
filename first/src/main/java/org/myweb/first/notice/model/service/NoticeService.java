@@ -32,6 +32,12 @@ public class NoticeService {
     //상속, 재구현 없는 형식
     //private final NoticeQueryRepository noticeQueryRepository;
 
+
+    public Notice createNotice(Notice newNotice){
+        NoticeEntity savedEntity = noticeRepository.save(newNotice.toEntity());
+        return savedEntity.toDto();
+    }
+
     /**
      * 페이징 처리된 공지사항 목록 조회
      *
@@ -49,6 +55,7 @@ public class NoticeService {
      * @param noticeId
      * @return
      */
+    @Transactional
     public Notice getNoticeById(String noticeId) {
         Optional<NoticeEntity> optionalNotice = noticeRepository.findById(noticeId);
         if (optionalNotice.isEmpty()) {
@@ -59,12 +66,18 @@ public class NoticeService {
         // 조회수 증가
         notice.setNotReadCount(notice.getNotReadCount() + 1);
 
-        // 저장
+        // 데이터베이스에 업데이트 반영
         noticeRepository.save(notice);
 
         return notice.toDto();
     }
 
+    /**
+     * 공지사항 업데이트
+     * @param noticeId
+     * @param updatedNotice
+     * @return
+     */
     // 공지사항 업데이트
     public Notice updateNotice(String noticeId, Notice updatedNotice) {
         Optional<NoticeEntity> optionalNotice = noticeRepository.findById(noticeId);

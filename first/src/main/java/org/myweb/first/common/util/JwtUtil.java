@@ -3,6 +3,7 @@ package org.myweb.first.common.util;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +16,7 @@ import java.util.Date;
 /**
  * JWT 생성 및 검증을 위한 유틸리티 클래스
  */
+@Slf4j
 @Component // 스프링 컴포넌트로 등록: @Autowired를 사용하여 JwtUtil을 주입받을 수 있다
 public class JwtUtil {
 
@@ -110,6 +112,9 @@ public class JwtUtil {
                     .parseClaimsJws(token); // 토큰 파싱하고 서명 검증. 이 과정에서 토큰의 무결성, 유효 기간 등이 확인됨
             logger.debug("Token is valid."); // 유효한 토큰 로그
             return true; // 유효한 토큰
+        }catch(ExpiredJwtException e){
+            log.error("JWT expired: {}", e.getMessage());
+            return false; // 만료된 토큰
         } catch (JwtException ex) {
             logger.error("JWT validation failed", ex); // 토큰 검증 실패 로그
             return false; // 유효하지 않은 토큰

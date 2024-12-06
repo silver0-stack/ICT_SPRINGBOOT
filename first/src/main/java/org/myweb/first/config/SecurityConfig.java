@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .configurationSource(request -> {
                             var corsConfig = new org.springframework.web.cors.CorsConfiguration();
                             corsConfig.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5000")); // 실제 사용 도메인으로 제한
-                            corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                            corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
                             corsConfig.setAllowedHeaders(List.of("*")); // 모든 헤더를 허용한다
                             corsConfig.setAllowCredentials(false); // 클라이언트가 인증 정보를 포함한 요청을 보낼 수 없도록 설정한다.
                             return corsConfig;
@@ -67,9 +67,12 @@ public class SecurityConfig {
 
                         // /api/chat/save 엔드포인트에 대한 POST 요청 허용
                         .requestMatchers(HttpMethod.PUT, "/api/chat/save").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/notices").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/notices/{notId}").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/notices/{notId}").hasAnyRole("ADMIN")
 
                         // GET /api/members/** 엔드포인트는 SENIOR, MANAGER, FAMILY, ADMIN에게 허용
-                        .requestMatchers(HttpMethod.GET, "/api/members/**", "/api/chat/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/members/**", "/api/chat/**", "/api/notices/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
                         // 그 외의 /api/members/** 엔드포인트(POST, PUT, DELETE 등)는 SENIOR, MANAGER, FAMILY, ADMIN, AI에게 허용
                         .requestMatchers(HttpMethod.PUT, "/api/members/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger UI 접근 허용
