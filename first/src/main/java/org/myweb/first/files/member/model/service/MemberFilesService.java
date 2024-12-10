@@ -106,7 +106,10 @@ public class MemberFilesService {
         // System.out.println(result);  // 출력: "file.txt"
 
         // Object.requireNonNull은 객체가 null인지 확인하고, null이면 NullPointerException을 던진다.
-        String originalName = StringUtils.cleanPath(Objects.requireNonNull(uploadFile.getOriginalFilename()));
+        // 객체가 null인지 확인해, 런타임에서 예외가 발생하지 않도록 보장.
+        // 예외 메시지를 커스텀할 수도 있음
+        String originalName = StringUtils.cleanPath(Objects.requireNonNull(uploadFile.getOriginalFilename(), "파일 이름은 null일 수 없습니다."));
+        // NullPointerException 발생: "파일 이름은 null일 수 없습니다."
 
         // 파일 확장자 검증
         if (!isValidFileExtension(originalName)) {
@@ -117,13 +120,31 @@ public class MemberFilesService {
         String rename = memberUuid + "_" + originalName;
 
         // 파일 저장 경로 생성
+        // Paths.get은 문자열로 표현된 경로를 Path 객체로 변환한다.
+        // 문자열 경로를 기반으로 파일 시스템 경로를 나타내는 Path 객체 생성
+        // Path 객체는 파일/디렉토리 작업에 사용된다.
+        // 사용이유: uploadDir와 같은 디렉토리를 작업할 때 문자열 대신 Path 객체를 사용하여 타입 안정성을 확보
+
+        // toAbsolutePath():
+        // 경로를 절대경로로 변환한다.
+        // 작업 디렉토리에 관계없이 파일이 저장될 정확한 경로를 보장
+
+        // normalize()
+        // 경로를 간소화하여 중복 요소 제거
+        // .(현재 디렉토리)와 ..(부모 디렉토리) 제거
+        // 경로를 명확하게 만들어 파일 작업 중 혼란을 방지
         Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath); // 업로드 디렉토리가 없으면 생성
         }
 
-        // 파일 저장
+        // Path.resolve(uploadPath): 경로에 하위 폴더 추가
         Path filePath = uploadPath.resolve(rename);
+
+        // Files.copy: 파일 또는 스트림 복사
+        // 입력 스트림(InputStream)에서 읽어 파일에 저장
+        // 기존 파일이 있는 경우 덮어쓸지 결정 (StandardCopyOption.REPLACE_EXISTING 사용 시 덮어씀)
+        // 사용이유: 업로드된 파일의 내용을 서버 디스크에 저장
         Files.copy(uploadFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         // 기존 프로필 사진 삭제

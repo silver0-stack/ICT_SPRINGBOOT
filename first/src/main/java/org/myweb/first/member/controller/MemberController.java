@@ -162,7 +162,6 @@ public class MemberController {
      * @return 로그아웃 결과 응답
      */
     @PostMapping("/logout")
-    @Operation(summary = "로그아웃", description = "유저가 로그아웃 할 때 사용하는 API")
     public ResponseEntity<ApiResponse<Void>> logout(@RequestParam String userId) {
         log.info("Logout attempt for user: {}", userId);
 
