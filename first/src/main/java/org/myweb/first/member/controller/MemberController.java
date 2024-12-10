@@ -22,7 +22,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import java.io.IOException;
@@ -207,14 +206,12 @@ public class MemberController {
      *
      * @param member 회원 정보 DTO (폼 데이터)
      * @param bindingResult 유효성 검증 결과
-     * @param mfile  프로필 사진 파일 (선택적)
      * @return 회원가입 결과 응답
      */
     @PostMapping("/enroll")
     @Operation(summary = "회원가입", description = "새로운 사용자를 등록하는 API")
     public ResponseEntity<ApiResponse<Member>> createMember(@Valid @ModelAttribute Member member,
-                                                            BindingResult bindingResult,
-                                                            @RequestParam(name = "photoFile", required = false) MultipartFile mfile) {
+                                                            BindingResult bindingResult) {
 
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getAllErrors().stream()
@@ -225,53 +222,13 @@ public class MemberController {
         }
         log.info("Enrollment attempt: {}", member); // 회원가입 시도 로그
 
-        // 파일 업로드 처리
-        if (mfile != null && !mfile.isEmpty()) {
-            String fileName = StringUtils.cleanPath(Objects.requireNonNull(mfile.getOriginalFilename()));
-
-            // 파일 이름 검증 (예: 허용된 확장자만)
-            if (!isValidFileExtension(fileName)) {
-                ApiResponse<Member> response = ApiResponse.<Member>builder()
-                        .success(false)
-                        .message("허용되지 않는 파일 형식입니다.")
-                        .build();
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response); // 오류 응답 반환
-            }
-
-            // 파일 이름 재정의 (사용자ID + 원본 파일명)
-            String renameFileName = member.getMemId() + "_" + fileName;
-
-            try {
-                // 업로드 디렉토리 경로 설정
-                Path saveDirectory = Paths.get(uploadDir).toAbsolutePath().normalize();
-                if (!Files.exists(saveDirectory)) {
-                    Files.createDirectories(saveDirectory); // 디렉토리 없을 경우 생성
-                }
-
-                // 파일 저장 경로 설정
-                Path targetLocation = saveDirectory.resolve(renameFileName);
-                // 파일 복사(덮어쓰기 허용)
-                Files.copy(mfile.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-                log.info("File uploaded to: {}", targetLocation);
-                // 파일 경로 저장 (예: member 객체에 저장)
-                // member.setProfilePicturePath(targetLocation.toString()); // 이 라인은 제거됨
-                // 프로필 사진은 MemberFilesController에서 별도로 관리됨
-            } catch (IOException e) {
-                log.error("File upload failed: {}", e.getMessage(), e); // 파일 업로드 실패
-                ApiResponse<Member> response = ApiResponse.<Member>builder()
-                        .success(false)
-                        .message("첨부파일 업로드 실패!")
-                        .build();
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response); // 오류 응답 반환
-            }
-        }
 
         log.info("Final member data: {}", member); // 최종 회원 데이터 로그
 
         // 회원가입 처리
         // 엔터티에서 @PrePersist로 대체
         //member.setMemUuid(UUID.randomUUID().toString());
-        int result = memberService.insertMember(member, mfile);
+        int result = memberService.insertMember(member);
         if (result > 0) {
             // 성공 응답 생성
             ApiResponse<Member> response = ApiResponse.<Member>builder()
@@ -492,19 +449,5 @@ public class MemberController {
         return ResponseEntity.ok(response); // 성공 응답 반환
     }
 
-    /**
-     * 파일 확장자 검증 메소드
-     *
-     * @param fileName 파일 이름
-     * @return 유효한 확장자 여부
-     */
-    private boolean isValidFileExtension(String fileName) {
-        String[] allowedExtensions = {".jpg", ".jpeg", ".png", ".gif"}; // 허용된 확장자 목록
-        for (String ext : allowedExtensions) {
-            if (fileName.toLowerCase().endsWith(ext)) {
-                return true; // 유효한 확장자일 경우
-            }
-        }
-        return false; // 유효하지 않은 확장자일 경우
-    }
+
 }
