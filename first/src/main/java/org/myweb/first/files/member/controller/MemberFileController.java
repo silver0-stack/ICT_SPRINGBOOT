@@ -9,12 +9,17 @@ import org.myweb.first.files.member.model.dto.MemberFiles;
 import org.myweb.first.files.member.model.service.MemberFilesService;
 import org.myweb.first.member.model.dto.Member;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,28 +37,52 @@ public class MemberFileController {
     private String uploadDir;
 
     /**
-     * 회원 UUID로 프로필 사진 조회
+     * 회원 UUID로 프사 이미지 반환용 메소드
      *
      * @param memUuid 회원 UUID
      * @return MemberFiles DTO
      */
     @GetMapping("/{memUuid}")
-    @Operation(summary = "프로필 사진 조회", description = "특정 회원의 프로필 사진을 조회하는 API")
-    public ResponseEntity<ApiResponse<MemberFiles>> getMemberFiles(@PathVariable String memUuid){
-        MemberFiles memberFiles = memberFilesService.getMemberFileByMemberUuid(memUuid);
-        if(memberFiles != null){
-            ApiResponse<MemberFiles> response = ApiResponse.<MemberFiles>builder()
-                    .success(true)
-                    .message("프로필 사진 조회 성공")
-                    .data(memberFiles)
-                    .build();
-            return ResponseEntity.ok(response);
-        } else {
-            ApiResponse<MemberFiles> response = ApiResponse.<MemberFiles>builder()
-                    .success(false)
-                    .message("프로필 사진이 존재하지 않습니다.")
-                    .build();
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    public ResponseEntity<Resource> getProfileImage(@PathVariable String memUuid) {
+        try {
+            // 1. 서비스에서 파일 경로 가져오기
+            // Java NIO(Non-blocking I/O)에서 제공하는 클래스, 파일이나 디렉토리의 경로를 나타냄
+            // 서버에 저장딘 프로필 사진 파일의 위치
+            // 예: ./uploads/profile123.jpg
+            Path filePath = memberFilesService.getProfilePicturePath(memUuid);
+            // Resource는 Spring Framework에서 파일이나 URL 등을 추상화한 객체
+            // UrlResource는 특정 URL에 있는 리소스를 다루는 클래스
+            // 여기선 filePath.toUri()를 사용해 파일 경로를 URL 형식으로 변환한 후 리소스로 읽어온다
+            // file:///./uploads/profile123.jpg
+            Resource fileResource = new UrlResource(filePath.toUri());
+
+            // 파일이 실제로 존재하는지 확인
+            if (!fileResource.exists()) {
+                // 파일이 없으면 404 NOT FOUND 상태로 응답을 반환
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+
+            // 적절한 MIME 타입 설정
+            // Files.probeContentType(Path path)는 파일을 MIME 타입을 반환하는 메소드
+            // MIME 타입: 파일 형식 정보를 나타내는 문자열
+            // 예) image/jpeg, image/png, text/html
+            // 반환값이 null 인 경우 파일 형식을 알 수 없다는 의미다.
+            String contentType = Files.probeContentType(filePath);
+            if (contentType == null) {
+                // application/octet-stream은 MIME 타입의 기본값으로
+                // 알 수 없는 파일 형식을 나타낸다.
+                // 브라우저는 이 타입을 다운로드 가능한 파일로 인식한다
+                // 여기서는 MIME 타입이 null일 때 기본값으로 설정된다.
+                contentType = "application/octet-stream";
+            }
+
+            return ResponseEntity
+                    .ok() // HTTP 상태 코드 200(성공)
+                    .contentType(MediaType.parseMediaType(contentType)) // 응답의 Content-Type 헤더 설정
+                    .body(fileResource); // 응답 본문에 파일 리소스를 포함시킨다.
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -84,72 +113,37 @@ public class MemberFileController {
      * @return MemberFiles DTO
      */
     @PostMapping("/{memUuid}")
-    @Operation(summary = "프로필 사진 업로드", description = "특정 회원의 프로필 사진을 업로드하는 API")
-    public ResponseEntity<ApiResponse<MemberFiles>> uploadMemberFiles(@PathVariable String memUuid,
-                                                                      @RequestParam("photoFile") MultipartFile file){
-
-        // 파일 업로드 처리
-        if (file != null && !file.isEmpty()) {
-            String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-
-            // 파일 이름 검증 (예: 허용된 확장자만)
-            if (!isValidFileExtension(fileName)) {
-                ApiResponse<MemberFiles> response = ApiResponse.<MemberFiles>builder()
-                        .success(false)
-                        .message("허용되지 않는 파일 형식입니다.")
-                        .build();
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response); // 오류 응답 반환
-            }
-
-            // 파일 이름 재정의 (사용자ID + 원본 파일명)
-            String renameFileName = memUuid + "_" + fileName;
-
-            try {
-                // 업로드 디렉토리 경로 설정
-                Path saveDirectory = Paths.get(uploadDir).toAbsolutePath().normalize();
-                if (!Files.exists(saveDirectory)) {
-                    Files.createDirectories(saveDirectory); // 디렉토리 없을 경우 생성
-                }
-
-                // 파일 저장 경로 설정
-                Path targetLocation = saveDirectory.resolve(renameFileName);
-                // 파일 복사(덮어쓰기 허용)
-                Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-                log.info("File uploaded to: {}", targetLocation);
-                // 파일 경로 저장 (예: member 객체에 저장)
-                // member.setProfilePicturePath(targetLocation.toString()); // 이 라인은 제거됨
-                // 프로필 사진은 MemberFilesController에서 별도로 관리됨
-            } catch (java.io.IOException e) {
-                log.error("File upload failed: {}", e.getMessage(), e); // 파일 업로드 실패
-                ApiResponse<MemberFiles> response = ApiResponse.<MemberFiles>builder()
-                        .success(false)
-                        .message("첨부파일 업로드 실패!")
-                        .build();
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response); // 오류 응답 반환
-            }
-        }
+    public ResponseEntity<ApiResponse<MemberFiles>> uploadMemberFiles(
+            @PathVariable String memUuid,
+            @RequestParam("photoFile") MultipartFile file) {
 
         try {
+            // 파일 업로드 서비스 호출
             MemberFiles memberFiles = memberFilesService.uploadMemberFiles(memUuid, file);
+
             ApiResponse<MemberFiles> response = ApiResponse.<MemberFiles>builder()
                     .success(true)
                     .message("프로필 사진 업로드 성공")
                     .data(memberFiles)
                     .build();
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
         } catch (IllegalArgumentException e) {
             ApiResponse<MemberFiles> response = ApiResponse.<MemberFiles>builder()
                     .success(false)
                     .message(e.getMessage())
                     .build();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+
         } catch (IOException e) {
             ApiResponse<MemberFiles> response = ApiResponse.<MemberFiles>builder()
                     .success(false)
                     .message("파일 업로드 중 오류가 발생했습니다.")
                     .build();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        } catch (Exception e){
+
+        } catch (Exception e) {
+            log.error("예기치 못한 오류 발생: {}", e.getMessage(), e);
             ApiResponse<MemberFiles> response = ApiResponse.<MemberFiles>builder()
                     .success(false)
                     .message("프로필 사진 업로드 중 예기치 않은 오류가 발생했습니다.")
@@ -157,6 +151,7 @@ public class MemberFileController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
 
     /**
      * 프로필 사진 삭제

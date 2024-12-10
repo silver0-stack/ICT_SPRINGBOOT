@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import org.myweb.first.files.member.model.dto.MemberFiles;
 import org.myweb.first.member.jpa.entity.MemberEntity;
 
+import java.util.UUID;
+
 
 /**
  * MemberFilesEntity 클래스는 MEMBER_FILES 테이블과 매핑되는 JPA 엔터티 클래스입니다.
@@ -37,6 +39,15 @@ public class MemberFilesEntity {
     @Column(name = "MF_RENAME", length = 1000, nullable = false)
     @NotBlank(message = "저장용 파일 이름은 필수 입력 항목입니다.")
     private String mfRename; // 저장용 파일 이름
+
+
+
+    @PrePersist
+    public void prePersist() {
+        if (this.mfId == null) {
+            this.mfId = UUID.randomUUID().toString(); // UUID 값 생성
+        }
+    }
 
     public MemberFiles toDto(){
         return MemberFiles.builder()

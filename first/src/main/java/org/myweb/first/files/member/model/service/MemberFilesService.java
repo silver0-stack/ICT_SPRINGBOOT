@@ -7,8 +7,10 @@ import org.myweb.first.files.member.jpa.repository.MemberFilesRepository;
 import org.myweb.first.files.member.model.dto.MemberFiles;
 import org.myweb.first.member.jpa.entity.MemberEntity;
 import org.myweb.first.member.jpa.repository.MemberRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -16,6 +18,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -24,8 +28,36 @@ import java.util.Optional;
 public class MemberFilesService {
     private final MemberFilesRepository memberFilesRepository;
     private final MemberRepository memberRepository;
+    @Value("${file.upload-dir}") // 파일 업로드 디렉토리 경로 주입
+    private String uploadDir;
 
-    private final String uploadDir = "uploads/profile_pictures"; // 파일 업로드 디렉토리
+
+    // 지금은 프로필 사진 조회 컨트롤러 메소드는 MemberFiles DTO를 ResponseEntity로 감싸서 반환한다
+    /* 하지만 프론트엔드에서 이미지 파일을 가져오려면 응답으로 JSON이 아니라 실제 이미지 파일을 반환해야 한다.
+    * 따라서 이미지 Path를 반환하는 메소드를 추가해야 함*/
+    public Path getProfilePicturePath(String memUuid){
+        // 1. DB에서 UUID(memUuid)를 기반으로 파일 이름(mfRename) 조회
+        String fileName=memberFilesRepository.findByMember_MemUuid(memUuid)
+                .map(MemberFilesEntity::getMfRename)  // MemberFilesEntity에서 mfRename(저장된 파일 이름) 추출
+                .orElseThrow(() -> new IllegalArgumentException("프로필 사진이 존재하지 않습니다"));
+
+        // 2. 기본 경로(uploadDir)와 파일 이름(fileName)을 결합하여 전체 경로 생성
+        // Paths.get(String first, String ... more)는 Java NIO에서 제공하는 메소드
+        // 파일 시스템 경로를 나타내는 Path 객체를 생성한다.
+        // uploadDir: 파일이 저장된 기본 디렉토리 경로
+        // Paths.get(uploadDir) -> Path 객체를 반환하며, 이는 파일 시스템의 경로를 표현한다
+
+        // .resolve(fileName)는 현재 경로에 하위 경로를 결합해 새로운 경로를 반환한다.
+        // fileName: 실제 파일 이름(예: 45s4df45ds-sfdf-fdfdfsd5f_profile123.jpg)
+        // 호출 결과:
+        // uploadDir: /uploads/profile_pictures
+        // fileName: 45s4df45ds-sfdf-fdfdfsd5f_profile123.jpg
+        // -> /uploads/profile_pictures/45s4df45ds-sfdf-fdfdfsd5f_profile123.jpg
+        // 즉, 경로를 동적으로 생성하여 파일의 전체 경로를 얻는다.
+        return Paths.get(uploadDir).resolve(fileName);
+
+    }
+
 
     /**
      * 회원 UUID로 프로필 사진 조회
@@ -47,65 +79,83 @@ public class MemberFilesService {
      * @3. 파일이름을 고유하게 변경하여 저장(rename)
      * @4. 기존 프로필 사진이 있다면 삭제
      * @5. 새로운 프로필 사진 엔터티를 생성하고 저장한다.
-     *
+     *df
      * @param memberUuid 회원 UUID
      * @param uploadFile 업로드할 파일
      * @return 성공여부(0, 1)
      * @throws IOException
      */
     @Transactional
-    public MemberFiles  uploadMemberFiles(String memberUuid, MultipartFile uploadFile) throws IOException {
-            // 회원 존재 여부 확인
-            MemberEntity member = memberRepository.findByMemUuid(memberUuid)
-                    .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+    public MemberFiles uploadMemberFiles(String memberUuid, MultipartFile uploadFile) throws IOException {
+        // 회원 존재 여부 확인
+        MemberEntity member = memberRepository.findByMemUuid(memberUuid)
+                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
 
-            // 파일 유효성 검사
-            if (uploadFile.isEmpty()) {
-                throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+        // 파일 유효성 검사
+        if (uploadFile == null || uploadFile.isEmpty()) {
+            throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+        }
+
+
+        // StringUtils.cleanPath는 문자열 경로에서 불필요하거나 잘못된 경로 요소를 정리해주는 메소드
+        // .나 ..과 같은 상대 경로를 제거
+        // 경로에서 잘못된 요소가 있을 경우 정리
+        // 사용 이유: 파일 이름을 정리하고 잠재적으로 문제가 될 수 있는 경로 요소를 제거하여 보안을 강화한다.
+
+        // String result = StringUtils.cleanPath("../myfolder/..file.txt");
+        // System.out.println(result);  // 출력: "file.txt"
+
+        // Object.requireNonNull은 객체가 null인지 확인하고, null이면 NullPointerException을 던진다.
+        String originalName = StringUtils.cleanPath(Objects.requireNonNull(uploadFile.getOriginalFilename()));
+
+        // 파일 확장자 검증
+        if (!isValidFileExtension(originalName)) {
+            throw new IllegalArgumentException("허용되지 않는 파일 형식입니다.");
+        }
+
+        // 저장할 파일명 생성 (멤버 UUID + 원본 파일명)
+        String rename = memberUuid + "_" + originalName;
+
+        // 파일 저장 경로 생성
+        Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath); // 업로드 디렉토리가 없으면 생성
+        }
+
+        // 파일 저장
+        Path filePath = uploadPath.resolve(rename);
+        Files.copy(uploadFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        // 기존 프로필 사진 삭제
+        Optional<MemberFilesEntity> existingProfile = memberFilesRepository.findByMember_MemUuid(memberUuid);
+        existingProfile.ifPresent(memberFilesEntity -> {
+            Path existingFilePath = Paths.get(uploadDir, memberFilesEntity.getMfRename());
+            try {
+                Files.deleteIfExists(existingFilePath); // 기존 파일 삭제
+            } catch (IOException e) {
+                log.error("기존 프로필 사진 삭제 실패: {}", e.getMessage(), e);
             }
+            memberFilesRepository.delete(memberFilesEntity); // DB에서 엔티티 삭제
+        });
 
-            // 원본 파일명과 저장할 파일명 설정
-            String originalName = uploadFile.getOriginalFilename();
-            String rename = memberUuid + "_" + originalName; // 멤버UUID_원래파일명
+        // 새로운 프로필 사진 엔티티 생성 및 저장
+        MemberFilesEntity memberFilesEntity = MemberFilesEntity.builder()
+                .member(member)
+                .mfOriginalName(originalName)
+                .mfRename(rename)
+                .build();
+        MemberFilesEntity savedEntity = memberFilesRepository.save(memberFilesEntity);
 
-            // 파일 저장 경로 생성
-            Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
+        // 관계 설정
+        member.setProfilePicture(savedEntity);
+        memberRepository.save(member);
 
-            // 파일 저장
-            Path filePath = uploadPath.resolve(rename);
-            Files.copy(uploadFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        return savedEntity.toDto(); // DTO로 반환
+    }
 
-            // 기존 프로필 사진이 있다면 삭제
-            Optional<MemberFilesEntity> existingProfile = memberFilesRepository.findByMember_MemUuid(memberUuid);
-            existingProfile.ifPresent(memberFilesEntity -> {
-                // 파일 삭제
-                Path existingFilePath = Paths.get(uploadDir, memberFilesEntity.getMfRename());
-                try{
-                    Files.deleteIfExists(existingFilePath);
-                }catch(IOException e){
-                    log.error("기존 프로필 사진 삭제 실패: {}", e.getMessage(), e);
-                }
-                // 데이터베이스에서 삭제
-                memberFilesRepository.delete(memberFilesEntity);
-            });
-
-
-            // 프로필 사진 엔터티 생성 및 저장
-            MemberFilesEntity memberFilesEntity = MemberFilesEntity.builder()
-                    .member(member)
-                    .mfOriginalName(originalName)
-                    .mfRename(rename)
-                    .build();
-            MemberFilesEntity savedEntity = memberFilesRepository.save(memberFilesEntity);
-
-            // MemberEntity와 MemberFilesEntity 간의 양방향 관계를 유지하고 있으므로 양쪽 엔터티 모두에서 관계를 설정해야 한다.
-            // MemberEntity에 프로필 사진 설정
-            member.setProfilePicture(savedEntity);
-            memberRepository.save(member);
-            return savedEntity.toDto();
+    private boolean isValidFileExtension(String fileName) {
+        String[] allowedExtensions = {".jpg", ".jpeg", ".png", ".gif"};
+        return Arrays.stream(allowedExtensions).anyMatch(fileName.toLowerCase()::endsWith);
     }
 
 

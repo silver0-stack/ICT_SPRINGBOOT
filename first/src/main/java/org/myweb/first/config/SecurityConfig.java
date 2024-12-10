@@ -66,13 +66,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/profile-pictures/**").permitAll()
 
                         // /api/chat/save 엔드포인트에 대한 POST 요청 허용
-                        .requestMatchers(HttpMethod.PUT, "/api/chat/save").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/chat/save", "/api/profile-pictures/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/notices").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/profile-pictures/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/notices/{notId}").hasAnyRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/notices/{notId}").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/profile-pictures/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
 
                         // GET /api/members/** 엔드포인트는 SENIOR, MANAGER, FAMILY, ADMIN에게 허용
-                        .requestMatchers(HttpMethod.GET, "/api/members/**", "/api/chat/**", "/api/notices/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/members/**", "/api/chat/**", "/api/notices/**","/api/profile-pictures/**" ).hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
                         // 그 외의 /api/members/** 엔드포인트(POST, PUT, DELETE 등)는 SENIOR, MANAGER, FAMILY, ADMIN, AI에게 허용
                         .requestMatchers(HttpMethod.PUT, "/api/members/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger UI 접근 허용
