@@ -101,15 +101,29 @@ public class MemberService {
     public int updateMember(Member member) {
         try {
             // 기존 회원 엔터티 조회
-            Optional<MemberEntity> existingMember = memberRepository.findByMemId(member.getMemId());
-            if (existingMember.isEmpty()) {
+            Optional<MemberEntity> existingMemberOpt = memberRepository.findByMemId(member.getMemId());
+            if (existingMemberOpt.isEmpty()) {
                 throw new IllegalArgumentException("수정할 회원이 존재하지 않습니다.");
             }
+
+            MemberEntity existingMember = existingMemberOpt.get();
+            // 필요한 필드 업데이트
+            existingMember.setMemName(member.getMemName());
+           // existingMember.setGender(member.getGender());
+            //existingMember.setAge(member.getAge());
+            existingMember.setMemCellphone(member.getMemCellphone());
+            existingMember.setMemPhone(member.getMemPhone());
+            existingMember.setMemEmail(member.getMemEmail());
+            existingMember.setMemRnn(member.getMemRnn());
+
+
             // 비밀번호 변경이 있는 경우
             if (member.getMemPw() != null && !member.getMemPw().isEmpty()) {
                 member.setMemPw(passwordEncoder.encode(member.getMemPw()));
             }
-            memberRepository.save(member.toEntity()).toDto();
+            // 변경 사항 저장
+            memberRepository.save(existingMember);
+
             // 성공
             return 1;
         } catch (Exception e) {

@@ -65,7 +65,7 @@ public class Member {
 
     public MemberEntity toEntity() {
         return MemberEntity.builder()
-                //.memUuid(this.memUuid) // UUID는 @PrePersist에서 자동 생성되므로 포함되지 않음
+                .memUuid(this.memUuid) // 기존 UUID가 유지되도록
                 .memId(this.memId)
                 .memPw(this.memPw)
                 .memName(this.memName)

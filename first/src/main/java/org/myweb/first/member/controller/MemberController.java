@@ -282,8 +282,6 @@ public class MemberController {
      * @return 수정 결과 응답
      */
     @PutMapping("/{memId}")
-    @Operation(summary = "회원 정보 수정", description = "회원의 정보를 수정하는 API")
-    @PreAuthorize("hasAuthority('ADMIN') or #memId == authentication.principal.memId") // 권한 설정 (ADMIN 또는 자기 자신)
     public ResponseEntity<ApiResponse<Member>> memberUpdateMethod(@PathVariable String memId,
                                                                   @Valid @ModelAttribute Member member,
                                                                   BindingResult bindingResult) {
@@ -354,6 +352,7 @@ public class MemberController {
                     .build();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
+            e.printStackTrace();
             ApiResponse<Member> response = ApiResponse.<Member>builder()
                     .success(false)
                     .message("회원 정보 수정 중 예기치 않은 오류가 발생했습니다.")
