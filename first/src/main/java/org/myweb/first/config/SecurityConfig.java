@@ -62,7 +62,7 @@ public class SecurityConfig {
                 // 권한 룰 설정: HTTP 요청에 대한 권한 규칙을 설정한다.
                 .authorizeHttpRequests(authorize -> authorize
                         // 로그인, 회원가입, ID 체크 엔드포인트에 대한 모든 요청 허용: 인증되지 않은 사용자도 접근할 수 있어야 함
-                        .requestMatchers("/api/members/login", "/api/members/enroll", "/api/members/idchk", "/api/members/photo/**").permitAll()
+                        .requestMatchers("/api/members/login", "/api/members/enroll", "/api/members/idchk", "/api/members/photo/**", "/api/members/refresh-token").permitAll()
                         .requestMatchers("/api/profile-pictures/**").permitAll()
 
                         // /api/chat/save 엔드포인트에 대한 POST 요청 허용

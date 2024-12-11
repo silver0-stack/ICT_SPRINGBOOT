@@ -33,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
     private final MemberRepository memberRepository; // 회원 리포지토리
     private final BCryptPasswordEncoder passwordEncoder; // 비밀번호 암호화 인코더
-    private final MemberFilesService memberFilesService; // 멤버 파일 서비스
 //    private final MemberQueryRepositoryImpl memberQueryRepository;
 
     /**
@@ -100,29 +99,50 @@ public class MemberService {
     @Transactional
     public int updateMember(Member member) {
         try {
+            log.info("Updating member with memUuid: {}", member.getMemUuid());
+
+
             // 기존 회원 엔터티 조회
-            Optional<MemberEntity> existingMemberOpt = memberRepository.findByMemId(member.getMemId());
+            Optional<MemberEntity> existingMemberOpt = memberRepository.findByMemUuid(member.getMemUuid());
             if (existingMemberOpt.isEmpty()) {
                 throw new IllegalArgumentException("수정할 회원이 존재하지 않습니다.");
             }
 
             MemberEntity existingMember = existingMemberOpt.get();
-            // 필요한 필드 업데이트
-            existingMember.setMemName(member.getMemName());
-           // existingMember.setGender(member.getGender());
-            //existingMember.setAge(member.getAge());
-            existingMember.setMemCellphone(member.getMemCellphone());
-            existingMember.setMemPhone(member.getMemPhone());
-            existingMember.setMemEmail(member.getMemEmail());
-            existingMember.setMemRnn(member.getMemRnn());
+            log.info("수정 전 존재하는 멤버 엔터티: {}", existingMember);
 
 
-            // 비밀번호 변경이 있는 경우
-            if (member.getMemPw() != null && !member.getMemPw().isEmpty()) {
-                member.setMemPw(passwordEncoder.encode(member.getMemPw()));
+            // 전달된 데이터로만 업데이트 (null이 아닌 필드만 처리)
+            if (member.getMemName() != null) {
+                existingMember.setMemName(member.getMemName());
             }
-            // 변경 사항 저장
+            if (member.getMemCellphone() != null) {
+                existingMember.setMemCellphone(member.getMemCellphone());
+            }
+            if (member.getMemPhone() != null) {
+                existingMember.setMemPhone(member.getMemPhone());
+            }
+            if (member.getMemEmail() != null) {
+                existingMember.setMemEmail(member.getMemEmail());
+            }
+            if (member.getMemRnn() != null) {
+                existingMember.setMemRnn(member.getMemRnn());
+            }
+            if (member.getMemPw() != null && !member.getMemPw().isEmpty()) {
+                existingMember.setMemPw(passwordEncoder.encode(member.getMemPw()));
+            }
+
+
+            // 변경 사항 저장(JPA가 자동으로 업데이트 처리)
             memberRepository.save(existingMember);
+
+            /*
+             * [JPA의 영속성 컨텍스트 문제]
+             * flush() 메소드를 호출하여 영속성 컨텍스트와 데이터베이스 상태를 강제로 동기화
+             * */
+            memberRepository.flush(); // 강제로 업데이트된 내용을 즉시 반영
+
+            log.info("Member saved:{}", existingMember);
 
             // 성공
             return 1;

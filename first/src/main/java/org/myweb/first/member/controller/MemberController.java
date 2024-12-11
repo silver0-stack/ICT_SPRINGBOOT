@@ -61,32 +61,68 @@ public class MemberController {
      */
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "유저가 로그인 할 때 사용하는 API")
-    public ResponseEntity<ApiResponse<LoginResponse>> loginMethod(@RequestBody User user) {
-        log.info("Login attempt: {}", user); // 로그인 시도 로그
+    public ResponseEntity<ApiResponse<LoginResponse>> loginMethod(@Valid @RequestBody User user,
+                                                                  BindingResult bindingResult) {
+        try {
+            if (bindingResult.hasErrors()) {
+                String errorMessage = bindingResult.getAllErrors().stream()
+                        .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                        .collect(Collectors.joining(", "));
 
-        Optional<Member> loginUser = memberService.selectMember(user.getMemId());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.<LoginResponse>builder().success(false).message(errorMessage).build());
+            }
 
-        // 회원 정보가 존재하고, 비밀번호가 일치하는지 확인
-        if (loginUser.isPresent()
-                && StringUtils.hasText(user.getMemPw())
-                && memberService.matchesPassword(user.getMemPw(), loginUser.get().getMemPw())) {
-            String memType = loginUser.get().getMemType(); // memType 필드 가져오기
+            log.info("Login attempt: {}", user);
+
+            Optional<Member> loginUserOpt = memberService.selectMember(user.getMemId());
+
+            if (loginUserOpt.isEmpty()) {
+                log.warn("User not found: {}", user.getMemId());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.<LoginResponse>builder()
+                                .success(false)
+                                .message("로그인 실패! 아이디나 암호를 확인하세요.")
+                                .build());
+            }
+
+            Member loginUser = loginUserOpt.get();
+
+            if (!StringUtils.hasText(user.getMemPw())) {
+                log.warn("Password is empty for user: {}", user.getMemId());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.<LoginResponse>builder()
+                                .success(false)
+                                .message("로그인 실패! 아이디나 암호를 확인하세요.")
+                                .build());
+            }
+
+            if (!memberService.matchesPassword(user.getMemPw(), loginUser.getMemPw())) {
+                log.warn("Password mismatch for user: {}", user.getMemId());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.<LoginResponse>builder()
+                                .success(false)
+                                .message("로그인 실패! 아이디나 암호를 확인하세요.")
+                                .build());
+            }
+
+            String memType = loginUser.getMemType();
             log.debug("User memType: {}", memType);
 
             // Access Token 생성
-            String accessToken = jwtUtil.generateAccessToken(loginUser.get().getMemUuid(), memType);
+            String accessToken = jwtUtil.generateAccessToken(loginUser.getMemUuid(), memType);
 
             // Refresh Token 생성
-            String refreshToken = jwtUtil.generateRefreshToken(loginUser.get().getMemUuid(), memType);
+            String refreshToken = jwtUtil.generateRefreshToken(loginUser.getMemUuid(), memType);
 
             // Refresh Token 저장
-            refreshTokenService.storedRefreshToken(loginUser.get().getMemUuid(), refreshToken);
+            refreshTokenService.storedRefreshToken(loginUser.getMemUuid(), refreshToken);
 
             // 로그인 응답 DTO 생성
             LoginResponse loginResponse = LoginResponse.builder()
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
-                    .member(loginUser.get())
+                    .member(loginUser)
                     .build();
 
             // API 응답 생성
@@ -97,15 +133,18 @@ public class MemberController {
                     .build();
 
             return ResponseEntity.ok(response); // 성공 응답 반환
-        } else {
-            // 로그인 실패 응답 생성
-            ApiResponse<LoginResponse> response = ApiResponse.<LoginResponse>builder()
-                    .success(false)
-                    .message("로그인 실패! 아이디나 암호를 확인하세요.")
-                    .build();
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // 실패 응답 반환
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("서버 오류 during login", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.<LoginResponse>builder()
+                            .success(false)
+                            .message("서버 오류: " + e.getMessage())
+                            .build());
         }
     }
+
 
     /**
      * Refresh Token을 사용하여 새로운 Access Token 발급
@@ -114,7 +153,6 @@ public class MemberController {
      * @return 새로운 Access Token을 포함한 응답
      */
     @PostMapping("/refresh-token")
-    @Operation(summary = "Refresh Token으로 Access Token 재발급", description = "유효한 Refresh Token을 사용하여 새로운 Access Token을 발급합니다.")
     public ResponseEntity<ApiResponse<LoginResponse>> refreshAccessToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
         String refreshToken = refreshTokenRequest.getRefreshToken();
         log.info("Refresh Token received: {}", refreshToken);
@@ -127,6 +165,7 @@ public class MemberController {
             if (refreshTokenService.validateRefreshToken(userId, refreshToken)) {
                 Optional<Member> memberOpt = memberService.selectMember(userId);
                 if (memberOpt.isPresent()) {
+                    // 새로운 Access Token 및 Refresh Token 생성
                     String newAccessToken = jwtUtil.generateAccessToken(userId, memType);
 
                     // 로그인 응답 DTO 생성 (Refresh Token은 새로 발급하지 않음)
@@ -283,50 +322,57 @@ public class MemberController {
      */
     @PutMapping("/{memId}")
     public ResponseEntity<ApiResponse<Member>> memberUpdateMethod(@PathVariable String memId,
-                                                                  @Valid @ModelAttribute Member member,
-                                                                  BindingResult bindingResult) {
+                                                                  @Valid @RequestBody Member member,
+                                                                  BindingResult bindingResult){
         try {
-            log.info("Member update attempt: {}", member); // 회원 정보 수정 시도 로그
-
-            // 경로의 memId와 요청 본문의 memId가 일치하는지 확인
-            if (!memId.equals(member.getMemId())) {
-                // memId가 일치하지 않을 경우 실패 응답 반환
-                ApiResponse<Member> response = ApiResponse.<Member>builder()
-                        .success(false)
-                        .message("요청된 memId와 요청 본문의 memId가 일치하지 않습니다.")
-                        .build();
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
-
+            // 입력 데이터의 유효성 검사
             if (bindingResult.hasErrors()) {
                 String errorMessage = bindingResult.getAllErrors().stream()
                         .map(DefaultMessageSourceResolvable::getDefaultMessage)
                         .collect(Collectors.joining(", "));
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(ApiResponse.<Member>builder().success(false).message(errorMessage).build());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                        ApiResponse.<Member>builder()
+                                .success(false)
+                                .message(errorMessage)
+                                .build()
+                );
             }
 
-            // 기존 회원 정보 조회
+            // memUuid 검증
+            if (member.getMemUuid() == null){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                        ApiResponse.<Member>builder()
+                                .success(false)
+                                .message("memUuid가 프론트로부터 제공되지 않았습니다.")
+                                .build()
+                );
+            }
+
+            log.info("Member update attempt: memId={}, memUuid={}", memId, member.getMemUuid());
+
+            // memId와 request body의 memId 일치 여부 확인
+            if (!memId.equals(member.getMemId())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                        ApiResponse.<Member>builder()
+                                .success(false)
+                                .message("요청된 memId와 요청 본문의 memId가 일치하지 않습니다.")
+                                .build()
+                );
+            }
+
+            // 기존 회원 조회
             Optional<Member> existingMemberOpt = memberService.selectMember(memId);
             if (existingMemberOpt.isEmpty()) {
-                // 회원 정보가 없을 경우 실패 응답 반환
-                ApiResponse<Member> response = ApiResponse.<Member>builder()
-                        .success(false)
-                        .message("회원 정보가 존재하지 않습니다.")
-                        .build();
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ApiResponse.<Member>builder()
+                                .success(false)
+                                .message("회원 정보가 존재하지 않습니다.")
+                                .build()
+                );
             }
 
-            Member existingMember = existingMemberOpt.get();
-
-            // 비밀번호 변경 여부 확인 및 암호화
-            if (StringUtils.hasText(member.getMemPw())) {
-                existingMember.setMemPw(memberService.encodedPassword(member.getMemPw()));
-                log.info("Encoded new password for user ID: {}", memId);
-            }
-
-            // 회원 정보 수정 처리
-            int result = memberService.updateMember(existingMember);
+            // 업데이트 시도
+            int result = memberService.updateMember(member);
             if (result > 0) {
                 Optional<Member> updatedMemberOpt = memberService.selectMember(memId);
                 if (updatedMemberOpt.isPresent()) {
@@ -336,14 +382,21 @@ public class MemberController {
                             .data(updatedMemberOpt.get())
                             .build();
                     return ResponseEntity.ok(response);
+                } else {
+                    // 업데이트 후 조회 실패
+                    ApiResponse<Member> response = ApiResponse.<Member>builder()
+                            .success(false)
+                            .message("회원 정보 수정 후 조회에 실패했습니다.")
+                            .build();
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
                 }
             } else {
-                // 실패 응답 생성
+                // 업데이트 실패
                 ApiResponse<Member> response = ApiResponse.<Member>builder()
                         .success(false)
                         .message("회원 정보 수정 실패! 확인하고 다시 시도해주세요.")
                         .build();
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response); // 실패 응답 반환
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
         } catch (IllegalArgumentException e) {
             ApiResponse<Member> response = ApiResponse.<Member>builder()
@@ -359,7 +412,6 @@ public class MemberController {
                     .build();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return null;
     }
 
     /**

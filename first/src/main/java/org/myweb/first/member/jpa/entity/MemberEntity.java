@@ -1,13 +1,11 @@
 package org.myweb.first.member.jpa.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.GenerationTime;
@@ -129,6 +127,9 @@ public class MemberEntity {
 Specifying FetchType. LAZY for the non-owning side of the @OneToOne association will not affect the loading.
 The related entity will still be loaded as if the FetchType. EAGER is defined. */
     @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    /* 양방향 관계의 순환 참조를 방지하려면 @ToString.Exclude를 추가하여 Lombok의 toString() 생성 시 특정 필드를 제외할 수 있다.*/
+    @ToString.Exclude
+    @JsonIgnore
     private MemberFilesEntity profilePicture; // 회원의 프로필 사진 (일대일 관계)
 
     @PrePersist
