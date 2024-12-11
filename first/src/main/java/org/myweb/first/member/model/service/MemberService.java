@@ -99,7 +99,7 @@ public class MemberService {
     @Transactional
     public int updateMember(Member member) {
         try {
-            log.info("Updating member with memUuid: {}", member.getMemUuid());
+            log.info("Updating member with memUuid: {}", member);
 
 
             // 기존 회원 엔터티 조회
@@ -147,8 +147,8 @@ public class MemberService {
             // 성공
             return 1;
         } catch (Exception e) {
-            log.error("Update Member Error: {}", e.getMessage());
             e.printStackTrace();
+            log.error("Update Member Error: {}", e.getMessage());
             // 실패
             return 0;
         }
