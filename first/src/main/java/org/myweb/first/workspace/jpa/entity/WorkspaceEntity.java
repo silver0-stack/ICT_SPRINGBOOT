@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.myweb.first.chat.jpa.entity.ChatMessageEntity;
+import org.myweb.first.workspace.model.dto.Workspace;
 
 import java.sql.Timestamp;
 import java.util.Set;
@@ -41,4 +42,16 @@ public class WorkspaceEntity {
 
     @OneToMany(mappedBy = "msgWorkspaceId", cascade=CascadeType.ALL, orphanRemoval=true)
     private Set<ChatMessageEntity> chatMessages;
+
+    public Workspace toDto(){
+        return Workspace.builder()
+               .workspaceId(this.workspaceId)
+               .workspaceName(this.workspaceName)
+               .workspaceCreatedAt(this.workspaceCreatedAt)
+               .workspaceUpdatedAt(this.workspaceUpdatedAt)
+               .workspaceMemUuid(this.workspaceMemUuid)
+               .workspaceDeletedAt(this.workspaceDeletedAt)
+               .workspaceStatus(this.workspaceStatus)
+               .build();
+    }
 }
