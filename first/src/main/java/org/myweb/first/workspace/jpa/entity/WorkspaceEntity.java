@@ -16,7 +16,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name="WORKSPACE")
+@Table(name="CHAT_WORKSPACE")
 public class WorkspaceEntity {
     @Id
     @Column(name = "WORKSPACE_ID", nullable = false, length = 100)

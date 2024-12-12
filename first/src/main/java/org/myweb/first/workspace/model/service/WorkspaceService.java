@@ -24,16 +24,22 @@ public class WorkspaceService {
 
     // 해당 UUID의 워크스페이스 추가하는 메소드
     public Workspace createWorkspace(String memUuid){
-        WorkspaceEntity newWorkspaceEntity = WorkspaceEntity.builder()
-                .workspaceId(UUID.randomUUID().toString())
-                .workspaceName("New Workspace") // 기본 이름
-                .workspaceCreatedAt(Timestamp.from(Instant.now()))
-                .workspaceMemUuid(memUuid)
-                .workspaceStatus("ACTIVE")
-                .build();
+        try{
+            WorkspaceEntity newWorkspaceEntity = WorkspaceEntity.builder()
+                    .workspaceId(UUID.randomUUID().toString())
+                    .workspaceName("New Workspace") // 기본 이름
+                    .workspaceCreatedAt(Timestamp.from(Instant.now()))
+                    .workspaceMemUuid(memUuid)
+                    .workspaceStatus("ACTIVE")
+                    .build();
 
-        WorkspaceEntity savedWorkspaceEntity = workspaceRepository.save(newWorkspaceEntity);
-        return savedWorkspaceEntity.toDto(); // DTO로 반환Q
+            WorkspaceEntity savedWorkspaceEntity = workspaceRepository.save(newWorkspaceEntity);
+            log.debug("Created Workspace: {}", savedWorkspaceEntity);
+            return savedWorkspaceEntity.toDto(); // DTO로 반환Q
+        }catch(Exception e){
+            log.error("Failed to create workspace", e); // 디버깅용 로그 추가
+            throw e; // 예외를 다시 던져서 상위 호출부에서 처리
+        }
     }
 
 

@@ -6,6 +6,8 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.myweb.first.chat.jpa.entity.ChatMessageEntity;
 import org.myweb.first.chat.jpa.repository.ChatRepository;
 import org.myweb.first.chat.model.dto.ChatMessage;
+import org.myweb.first.workspace.model.dto.Workspace;
+import org.myweb.first.workspace.model.service.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j    //Logger 객체 선언임, 별도의 로그객체 선언 필요없음, 제공되는 레퍼런스는 log 임
@@ -23,10 +27,18 @@ import java.util.stream.Collectors;
 public class ChatService {
     @Autowired
     private ChatRepository chatRepository;
+    @Autowired
+    private WorkspaceService workspaceService;
 
     @Transactional
     public int saveChatMessage(ChatMessage chatMessage) {
         try {
+            Optional<Workspace> existingWorkspace = workspaceService.getWorkspaceByMemUuid(chatMessage.getMsgSenderUUID());
+            if (existingWorkspace.isEmpty() && !Objects.equals(chatMessage.getMsgSenderUUID(), "ai-uuid-1234-5678-90ab-cdef12345678")) {
+                workspaceService.createWorkspace(chatMessage.getMsgSenderUUID());
+            }
+
+            // 워크스페이스 확인 및 생성
             ChatMessageEntity chatMessageEntity = chatMessage.toEntity();
 
             // userId 확인

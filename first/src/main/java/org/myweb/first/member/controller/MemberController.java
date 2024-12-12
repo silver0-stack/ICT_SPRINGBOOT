@@ -158,7 +158,7 @@ public class MemberController {
         log.info("Refresh Token received: {}", refreshToken);
 
         if (StringUtils.hasText(refreshToken) && jwtUtil.validateToken(refreshToken)) {
-            String userId = jwtUtil.extractUserId(refreshToken);
+            String userId = jwtUtil.extractUserId(refreshToken); // memUuid
             String memType = jwtUtil.extractRoles(refreshToken);
 
             // Refresh Token 검증
