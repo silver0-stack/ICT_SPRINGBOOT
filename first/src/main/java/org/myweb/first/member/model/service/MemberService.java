@@ -131,6 +131,9 @@ public class MemberService {
             if (member.getMemPw() != null && !member.getMemPw().isEmpty()) {
                 existingMember.setMemPw(passwordEncoder.encode(member.getMemPw()));
             }
+            if(member.getMemAddress() !=null && !member.getMemAddress().isEmpty()) {
+                existingMember.setMemAddress(member.getMemAddress());
+            }
 
 
             // 변경 사항 저장(JPA가 자동으로 업데이트 처리)
