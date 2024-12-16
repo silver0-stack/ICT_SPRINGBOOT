@@ -97,6 +97,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // GrantedAuthority 설정: memType을 ROLE_접두사와 함께 설정
                     List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roles));// ROLE_ 접두사 추가
 
+                    logger.debug("Extracted Authorities: {}", authorities);
                     // 인증 토큰 생성
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userId, null, authorities);

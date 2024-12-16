@@ -90,12 +90,12 @@ public class JwtUtil {
 
 
     /**
-     * 토큰에서 사용자 ID 추출 메소드
+     * 토큰에서 사용자 UUID 추출 메소드
      * @param token JWT 토큰
      * @return 사용자 ID
      */
     public String extractUserId(String token) {
-        return getClaims(token).getSubject(); // 클레임에서 주제(사용자 ID 추출)
+        return getClaims(token).getSubject(); // 클레임에서 주제(사용자 UUID 추출)
     }
 
 

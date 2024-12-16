@@ -76,8 +76,25 @@ public class MemberService {
      * @param memId 회원 ID
      * @return 회원 정보 DTO의 Optional
      */
-    public Optional<Member> selectMember(String memId) {
+    public Optional<Member> selectMemberByMemId(String memId) {
         Optional<MemberEntity> memberEntityOpt = memberRepository.findByMemId(memId);
+        if (memberEntityOpt.isPresent()) {
+            Member member = memberEntityOpt.get().toDto(); //  엔터티를 dto로 변환
+            log.debug("Loaded member: {}", member);
+            return Optional.of(member);
+        }
+        return Optional.empty(); // 회원 정보 없음
+    }
+
+
+    /**
+     * 회원 UUID로 회원 조회
+     *
+     * @param memUuid 회원 ID
+     * @return 회원 정보 DTO의 Optional
+     */
+    public Optional<Member> selectMemberByUuid(String memUuid) {
+        Optional<MemberEntity> memberEntityOpt = memberRepository.findByMemUuid(memUuid);
         if (memberEntityOpt.isPresent()) {
             Member member = memberEntityOpt.get().toDto(); //  엔터티를 dto로 변환
             log.debug("Loaded member: {}", member);

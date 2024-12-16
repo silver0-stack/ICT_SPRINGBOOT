@@ -14,32 +14,32 @@ public class RefreshTokenService {
 
     /**
      * Refresh Token 저장
-     * @param userId 사용자 ID
+     * @param memUuid 사용자 UUID
      * @param refreshToken Refresh Token
      */
-    public void storedRefreshToken(String userId, String refreshToken){
-        refreshTokenStore.put(userId, refreshToken);
+    public void storedRefreshToken(String memUuid, String refreshToken){
+        refreshTokenStore.put(memUuid, refreshToken);
     }
 
 
     /**
      * Refresh Token 검증
-     * @param userId 사용자 ID
+     * @param memUuid 사용자 ID
      * @param refreshToken Refresh Token
      * @return 유효한 토큰 여부
      */
-    public boolean validateRefreshToken(String userId, String refreshToken){
-        String storedToken = refreshTokenStore.get(userId);
+    public boolean validateRefreshToken(String memUuid, String refreshToken){
+        String storedToken = refreshTokenStore.get(memUuid);
         return storedToken != null && storedToken.equals(refreshToken);
     }
 
 
     /**
      * Refresh Token 삭제 (예: 로그아웃)
-     * @param userId 사용자 ID
+     * @param memUuid 사용자 ID
      */
-    public void deleteRefreshToken(String userId){
-        refreshTokenStore.remove(userId);
+    public void deleteRefreshToken(String memUuid){
+        refreshTokenStore.remove(memUuid);
     }
 
 }

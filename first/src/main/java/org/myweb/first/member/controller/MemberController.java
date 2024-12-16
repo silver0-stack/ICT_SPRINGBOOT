@@ -24,6 +24,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -75,7 +76,7 @@ public class MemberController {
 
             log.info("Login attempt: {}", user);
 
-            Optional<Member> loginUserOpt = memberService.selectMember(user.getMemId());
+            Optional<Member> loginUserOpt = memberService.selectMemberByMemId(user.getMemId());
 
             if (loginUserOpt.isEmpty()) {
                 log.warn("User not found: {}", user.getMemId());
@@ -161,9 +162,9 @@ public class MemberController {
             String userId = jwtUtil.extractUserId(refreshToken); // memUuid
             String memType = jwtUtil.extractRoles(refreshToken);
 
-            // Refresh Token 검증
+            // Refresh Token 검증(저장된 UUID와
             if (refreshTokenService.validateRefreshToken(userId, refreshToken)) {
-                Optional<Member> memberOpt = memberService.selectMember(userId);
+                Optional<Member> memberOpt = memberService.selectMemberByUuid(userId);
                 if (memberOpt.isPresent()) {
                     // 새로운 Access Token 및 Refresh Token 생성
                     String newAccessToken = jwtUtil.generateAccessToken(userId, memType);
@@ -197,15 +198,15 @@ public class MemberController {
     /**
      * 사용자 로그아웃 요청 처리
      *
-     * @param userId 사용자 ID
+     * @param memUuid 사용자 UUIDID
      * @return 로그아웃 결과 응답
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@RequestParam String userId) {
-        log.info("Logout attempt for user: {}", userId);
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestParam String memUuid) {
+        log.info("Logout attempt for user: {}", memUuid);
 
         // Refresh Token 삭제
-        refreshTokenService.deleteRefreshToken(userId);
+        refreshTokenService.deleteRefreshToken(memUuid);
 
         ApiResponse<Void> response = ApiResponse.<Void>builder()
                 .success(true)
@@ -242,7 +243,7 @@ public class MemberController {
     /**
      * 회원가입 처리 메소드
      *
-     * @param member 회원 정보 DTO (폼 데이터)
+     * @param member        회원 정보 DTO (폼 데이터)
      * @param bindingResult 유효성 검증 결과
      * @return 회원가입 결과 응답
      */
@@ -288,15 +289,15 @@ public class MemberController {
     /**
      * '내 정보 보기' 처리 메소드
      *
-     * @param memId 사용자 ID
+     * @param memUuid 사용자 ID
      * @return 회원 정보 응답
      */
     /* userPwd(비밀번호 해시)는 절대 클라이언트에 노출되어서는 안 됨, 데이터 유출 시 큰 보안 사고임
      * 따라서 userPwd만 없는 새로운 MemberInfoDTO 클래스를 생성해서 반환함*/
-    @GetMapping("/{memId}")
+    @GetMapping("/{memUuid}")
     @Operation(summary = "회원 정보 조회", description = "특정 회원의 정보를 조회하는 API")
-    public ResponseEntity<ApiResponse<Member>> getMember(@PathVariable String memId) {
-        Optional<Member> memberOpt = memberService.selectMember(memId);
+    public ResponseEntity<ApiResponse<Member>> getMember(@PathVariable String memUuid) {
+        Optional<Member> memberOpt = memberService.selectMemberByUuid(memUuid);
         if (memberOpt.isPresent()) {
             ApiResponse<Member> response = ApiResponse.<Member>builder()
                     .success(true)
@@ -316,14 +317,14 @@ public class MemberController {
     /**
      * 회원 정보 수정 처리 메소드
      *
-     * @param memId 사용자 ID
+     * @param memUuid  사용자 ID
      * @param member 수정할 회원 정보 DTO
      * @return 수정 결과 응답
      */
-    @PutMapping("/{memId}")
-    public ResponseEntity<ApiResponse<Member>> memberUpdateMethod(@PathVariable String memId,
+    @PutMapping("/{memUuid}")
+    public ResponseEntity<ApiResponse<Member>> memberUpdateMethod(@PathVariable String memUuid,
                                                                   @Valid @RequestBody Member member,
-                                                                  BindingResult bindingResult){
+                                                                  BindingResult bindingResult) {
         try {
             // 입력 데이터의 유효성 검사
             if (bindingResult.hasErrors()) {
@@ -339,7 +340,7 @@ public class MemberController {
             }
 
             // memUuid 검증
-            if (member.getMemUuid() == null){
+            if (member.getMemUuid() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                         ApiResponse.<Member>builder()
                                 .success(false)
@@ -348,10 +349,10 @@ public class MemberController {
                 );
             }
 
-            log.info("Member update attempt: memId={}, memUuid={}", memId, member.getMemUuid());
+            log.info("Member update attempt: memId={}, memUuid={}", memUuid, member.getMemUuid());
 
-            // memId와 request body의 memId 일치 여부 확인
-            if (!memId.equals(member.getMemId())) {
+            // memUuid와 request body의 memUuid의 일치 여부 확인
+            if (!memUuid.equals(member.getMemUuid())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                         ApiResponse.<Member>builder()
                                 .success(false)
@@ -361,7 +362,7 @@ public class MemberController {
             }
 
             // 기존 회원 조회
-            Optional<Member> existingMemberOpt = memberService.selectMember(memId);
+            Optional<Member> existingMemberOpt = memberService.selectMemberByUuid(memUuid);
             if (existingMemberOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                         ApiResponse.<Member>builder()
@@ -374,7 +375,7 @@ public class MemberController {
             // 업데이트 시도
             int result = memberService.updateMember(member);
             if (result > 0) {
-                Optional<Member> updatedMemberOpt = memberService.selectMember(memId);
+                Optional<Member> updatedMemberOpt = memberService.selectMemberByUuid(memUuid);
                 if (updatedMemberOpt.isPresent()) {
                     ApiResponse<Member> response = ApiResponse.<Member>builder()
                             .success(true)
@@ -422,11 +423,11 @@ public class MemberController {
      */
     @DeleteMapping("/{memUuid}")
     @Operation(summary = "회원 삭제", description = "특정 회원을 삭제하는 API")
-    @PreAuthorize("hasAuthority('ADMIN')") // 관리자만 삭제 가능
-    public ResponseEntity<ApiResponse<Void>> deleteMember(@PathVariable String memUuid){
+    @PreAuthorize("hasRole('ADMIN')") // 관리자만 삭제 가능
+    public ResponseEntity<ApiResponse<Void>> deleteMember(@PathVariable String memUuid) {
         try {
             int result = memberService.deleteMember(memUuid);
-            if(result > 0){
+            if (result > 0) {
                 ApiResponse<Void> response = ApiResponse.<Void>builder()
                         .success(true)
                         .message("회원 삭제 성공")
@@ -439,7 +440,7 @@ public class MemberController {
                         .build();
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             ApiResponse<Void> response = ApiResponse.<Void>builder()
                     .success(false)
                     .message("회원 삭제 중 예기치 않은 오류가 발생했습니다.")
@@ -453,50 +454,65 @@ public class MemberController {
      *
      * @param currentPage 현재 페이지 번호 (기본값: 1)
      * @param limit       페이지당 항목 수(회원 수) (기본값: 10)
-     * @param sort        정렬 기준 (기본값: enrollDate,desc)
+     * @param sort        정렬 기준 (기본값: memEnrollDate,desc)
      * @return 회원 목록 응답
      */
     @GetMapping
     @Operation(summary = "회원 목록 조회", description = "관리자가 전체 회원 목록을 조회하는 API")
-    @PreAuthorize("hasAuthority('ADMIN')") // 관리자만 접근 가능
+    @PreAuthorize("hasRole('ADMIN')") // 관리자만 접근 가능
     public ResponseEntity<ApiResponse<Page<Member>>> memberListMethod(
             @RequestParam(name = "page", defaultValue = "1") int currentPage,
             @RequestParam(name = "limit", defaultValue = "10") int limit,
             @RequestParam(name = "sort", defaultValue = "memEnrollDate,desc") String[] sort) {
-        log.info("Fetching member list: page {}, limit {}, sort {}", currentPage, limit, sort); // 회원 목록 조회 로그
+        log.info("Fetching member list: page {}, limit {}, sort {}", currentPage, limit, sort);
 
         // 정렬 처리
         Sort.Direction direction = Sort.Direction.DESC; // 기본 정렬 방향: 내림차순
-        String sortBy = "memEnrollDate"; // 기본 정렬 필드: 가입일
+        String sortBy = "memEnrollDate"; // 기본 정렬 필드
 
-        /*
-         * sort 배열의 첫 번째 요소는 정렬할 필드(enrollDate)
-         *             두 번째 요소는 정렬 방향(desc 또는 asc)
-         */
         if (sort.length == 2) {
             sortBy = sort[0]; // 정렬 기준 필드
             direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC; // 정렬 방향 설정
         }
 
         // Pageable 객체 생성
-        // PageRequest는 0부터 페이지 번호를 시작하므로, 클라이언트에서 1부터 시작하는 페이지 번호를 0부터로 변환
         Pageable pageable = PageRequest.of(currentPage - 1, limit, Sort.by(direction, sortBy));
-        // 전체 회원 조회
-        /*
-         * 서비스 호출 및 Page 객체 반환
-         * Page<Member>는 페이징된 회원 목록과 메타데이터를 포함
-         */
-        Page<Member> pageResult = memberService.getAllMembers(pageable);
 
-        // API 응답 생성
-        /*클라이언트는 Page<Member> 객체를 통해 데이터 리스트와 페이징 정보를 받을 수 있음*/
-        ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
-                .success(true)
-                .message("회원 목록 조회 성공")
-                .data(pageResult)
-                .build();
+        try {
+            // 서비스 호출 및 Page 객체 반환
+            Page<Member> pageResult = memberService.getAllMembers(pageable);
 
-        return ResponseEntity.ok(response); // 성공 응답 반환
+            // 회원 목록이 없는 경우
+            if (pageResult.isEmpty()) {
+                ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
+                        .success(true)
+                        .message("회원이 없습니다.")
+                        .data(Page.empty()) // 빈 페이지 반환
+                        .build();
+                return ResponseEntity.ok(response); // 상태 코드 200으로 빈 데이터 반환
+            }
+
+            // API 응답 생성
+            ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
+                    .success(true)
+                    .message("회원 목록 조회 성공")
+                    .data(pageResult)
+                    .build();
+
+            return ResponseEntity.ok(response); // 상태 코드 200
+
+        } catch (Exception e) {
+            log.error("회원 목록 조회 중 오류 발생: {}", e.getMessage(), e);
+
+            // 조회 실패 응답 생성
+            ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
+                    .success(false)
+                    .message("회원 목록 조회 실패: 서버 오류가 발생했습니다.")
+                    .data(null) // 실패 시 데이터 없음
+                    .build();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response); // 상태 코드 500
+        }
     }
 
 
