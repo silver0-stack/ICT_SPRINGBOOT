@@ -1,19 +1,10 @@
 package org.myweb.first.member.model.service;
 
-import java.io.IOException;
-import java.sql.Date;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.DynamicUpdate;
-import org.myweb.first.common.Search;
-import org.myweb.first.files.member.model.dto.MemberFiles;
-import org.myweb.first.files.member.model.service.MemberFilesService;
 import org.myweb.first.member.jpa.entity.MemberEntity;
 //import org.myweb.first.member.jpa.repository.MemberQueryRepositoryImpl;
 import org.myweb.first.member.jpa.repository.MemberRepository;

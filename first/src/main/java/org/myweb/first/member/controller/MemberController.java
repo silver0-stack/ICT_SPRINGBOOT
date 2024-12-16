@@ -462,12 +462,12 @@ public class MemberController {
     public ResponseEntity<ApiResponse<Page<Member>>> memberListMethod(
             @RequestParam(name = "page", defaultValue = "1") int currentPage,
             @RequestParam(name = "limit", defaultValue = "10") int limit,
-            @RequestParam(name = "sort", defaultValue = "enrollDate,desc") String[] sort) {
+            @RequestParam(name = "sort", defaultValue = "memEnrollDate,desc") String[] sort) {
         log.info("Fetching member list: page {}, limit {}, sort {}", currentPage, limit, sort); // 회원 목록 조회 로그
 
         // 정렬 처리
         Sort.Direction direction = Sort.Direction.DESC; // 기본 정렬 방향: 내림차순
-        String sortBy = "enrollDate"; // 기본 정렬 필드: 가입일
+        String sortBy = "memEnrollDate"; // 기본 정렬 필드: 가입일
 
         /*
          * sort 배열의 첫 번째 요소는 정렬할 필드(enrollDate)

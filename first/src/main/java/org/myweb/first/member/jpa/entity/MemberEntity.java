@@ -78,7 +78,7 @@ public class MemberEntity {
 
     
     // JPA에게 이 필드가 데이터베이스에 의해 생성됨을 알리고 저장 후 값을 가져오도록 지시함
-    @Generated(GenerationTime.INSERT)
+    @Generated(GenerationTime.INSERT) // DB에 의해 자동 생성
     @Column(name = "MEM_ENROLL_DATE", updatable = false, insertable = false)
     private Timestamp memEnrollDate; // 가입일자
 
