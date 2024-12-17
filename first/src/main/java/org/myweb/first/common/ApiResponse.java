@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ApiResponse<T> {
-    private boolean success;
-    private String message;
-    private T data;
+    private boolean success; // 성공 여부
+    private String message; // 메시지
+    private T data; // 데이터
 }
 
 
