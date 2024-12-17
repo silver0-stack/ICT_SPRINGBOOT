@@ -82,6 +82,7 @@ public class MemberFileController {
                     .body(fileResource); // 응답 본문에 파일 리소스를 포함시킨다.
 
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
