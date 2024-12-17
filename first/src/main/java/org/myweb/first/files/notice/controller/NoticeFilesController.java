@@ -28,16 +28,16 @@ public class NoticeFilesController {
     /**
      * 공지사항 파일 업로드
      *
-     * @param noticeId 공지사항 ID
+     * @param notId 공지사항 ID
      * @param file     업로드할 파일
      * @return ApiResponse<NoticeFiles>
      */
-    @PostMapping("/{noticeId}")
+    @PostMapping("/{notId}")
     public ResponseEntity<ApiResponse<NoticeFiles>> uploadNoticeFile(
-            @PathVariable String noticeId,
+            @PathVariable String notId,
             @RequestParam("file") MultipartFile file) {
         try {
-            NoticeFiles uploadedFile = noticeFilesService.uploadNoticeFile(noticeId, file);
+            NoticeFiles uploadedFile = noticeFilesService.uploadNoticeFile(notId, file);
             ApiResponse<NoticeFiles> response = ApiResponse.<NoticeFiles>builder()
                     .success(true)
                     .message("파일 업로드 성공")
@@ -83,13 +83,13 @@ public class NoticeFilesController {
     /**
      * 공지사항 파일 목록 조회
      *
-     * @param noticeId 공지사항 ID
+     * @param notId 공지사항 ID
      * @return ApiResponse<List < NoticeFiles>>
      */
-    @GetMapping("/{noticeId}")
-    public ResponseEntity<ApiResponse<List<NoticeFiles>>> getNoticeFiles(@PathVariable String noticeId) {
+    @GetMapping("/{notId}")
+    public ResponseEntity<ApiResponse<List<NoticeFiles>>> getNoticeFiles(@PathVariable String notId) {
         try {
-            List<NoticeFiles> files = noticeFilesService.getNoticeFiles(noticeId);
+            List<NoticeFiles> files = noticeFilesService.getNoticeFiles(notId);
 
             if (files.isEmpty()) {
                 ApiResponse<List<NoticeFiles>> response = ApiResponse.<List<NoticeFiles>>builder()

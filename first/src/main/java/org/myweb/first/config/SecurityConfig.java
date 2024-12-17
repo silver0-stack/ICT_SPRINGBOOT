@@ -61,27 +61,58 @@ public class SecurityConfig {
                         }))
                 // 권한 룰 설정: HTTP 요청에 대한 권한 규칙을 설정한다.
                 .authorizeHttpRequests(authorize -> authorize
-                        // 로그인, 회원가입, ID 체크 엔드포인트에 대한 모든 요청 허용: 인증되지 않은 사용자도 접근할 수 있어야 함
-                        .requestMatchers("/api/members/login", "/api/members/enroll", "/api/members/idchk", "/api/members/photo/**", "/api/members/refresh-token").permitAll()
-                        .requestMatchers("/api/profile-pictures/**").permitAll()
+                        // **permitAll 설정**: 인증 불필요한 엔드포인트
+                        .requestMatchers(
+                                "/api/members/login",
+                                "/api/members/enroll",
+                                "/api/members/idchk",
+                                "/api/members/photo/**",
+                                "/api/members/refresh-token",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/error"
+                        ).permitAll()
 
-                        // /api/chat/save 엔드포인트에 대한 POST 요청 허용
-                        .requestMatchers(HttpMethod.PUT, "/api/chat/save", "/api/profile-pictures/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/notices").hasAnyRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/profile-pictures/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/notices/{notId}").hasAnyRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/notices/{notId}").hasAnyRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/profile-pictures/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
+                        // **GET 요청**: 권한이 필요한 엔드포인트
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/members/**",
+                                "/api/chat/**",
+                                "/api/notices/**",
+                                "/api/profile-pictures/**",
+                                "/api/notice-files/**"
+                        ).hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
 
-                        // GET /api/members/** 엔드포인트는 SENIOR, MANAGER, FAMILY, ADMIN에게 허용
-                        .requestMatchers(HttpMethod.GET, "/api/members/**", "/api/chat/**", "/api/notices/**","/api/profile-pictures/**" ).hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
-                        // 그 외의 /api/members/** 엔드포인트(POST, PUT, DELETE 등)는 SENIOR, MANAGER, FAMILY, ADMIN, AI에게 허용
-                        .requestMatchers(HttpMethod.PUT, "/api/members/**").hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger UI 접근 허용
-                        // 그 외 모든 명시하지 않은 요청은 인증된 사용자이기만 하면 접근 가능: 보안강화를 위해 기본적으로 모든 요청에 대해 인증 요구
-                        .requestMatchers("/error").permitAll()
+                        // **POST 요청**: 권한이 필요한 엔드포인트
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/notices",
+                                "/api/notice-files/**"
+                        ).hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/profile-pictures/**"
+                        ).hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
+
+                        // **PUT 요청**: 권한이 필요한 엔드포인트
+                        .requestMatchers(HttpMethod.PUT,
+                                "/api/notices/{notId}"
+                        ).hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,
+                                "/api/chat/save",
+                                "/api/profile-pictures/**",
+                                "/api/members/**"
+                        ).hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
+
+                        // **DELETE 요청**: 권한이 필요한 엔드포인트
+                        .requestMatchers(HttpMethod.DELETE,
+                                "/api/notices/{notId}"
+                        ).hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,
+                                "/api/profile-pictures/**"
+                        ).hasAnyRole("SENIOR", "MANAGER", "FAMILY", "ADMIN")
+
+                        // **기타 요청**: 인증된 사용자만 접근 가능
                         .anyRequest().authenticated()
                 )
+
                 // JWT 필터 추가: Spring Security의 기본 인증 필터 전에 JwtAuthenticationFilter를 실행한다.: 인증 과정에서 JWT 토큰을 먼저 처리하게 됨
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
