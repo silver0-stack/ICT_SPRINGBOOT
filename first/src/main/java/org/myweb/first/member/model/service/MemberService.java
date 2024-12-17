@@ -196,7 +196,12 @@ public class MemberService {
      * @return 존재 여부 (1: 존재, 0: 존재하지 않음)
      */
     public int selectCheckId(String memId) {
-        return memberRepository.existsById(memId) ? 1 : 0;    //jpa가 제공하는 existsById 메소드 사용
+        // existsById()는 엔터티의 기본 키 (PK) 기준으로 존재 여부를 검사한다.
+        // 즉, memUuid로 조회하는 JPA 메소드인 것
+        // 근데, 난 memId(사용자 아이디)를 기준으로 조회하고 싶으니 내가 repository에 커스텀 쿼리 메소드를 추가해야 한다
+        //return memberRepository.existsById(memId) ? 1 : 0;    //jpa가 제공하는 existsById 메소드 사용
+        Optional<MemberEntity> member = memberRepository.findByMemId(memId);
+        return member.isPresent()? 1 : 0;    // Optional.isPresent()로 존재 여부를 확인
     }
 
 

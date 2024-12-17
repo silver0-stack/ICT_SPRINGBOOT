@@ -458,62 +458,49 @@ public class MemberController {
      * @return 회원 목록 응답
      */
     @GetMapping
-    @Operation(summary = "회원 목록 조회", description = "관리자가 전체 회원 목록을 조회하는 API")
-    @PreAuthorize("hasRole('ADMIN')") // 관리자만 접근 가능
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Page<Member>>> memberListMethod(
             @RequestParam(name = "page", defaultValue = "1") int currentPage,
             @RequestParam(name = "limit", defaultValue = "10") int limit,
             @RequestParam(name = "sort", defaultValue = "memEnrollDate,desc") String[] sort) {
         log.info("Fetching member list: page {}, limit {}, sort {}", currentPage, limit, sort);
 
-        // 정렬 처리
-        Sort.Direction direction = Sort.Direction.DESC; // 기본 정렬 방향: 내림차순
-        String sortBy = "memEnrollDate"; // 기본 정렬 필드
-
+        Sort.Direction direction = Sort.Direction.DESC;
+        String sortBy = "memEnrollDate";
         if (sort.length == 2) {
-            sortBy = sort[0]; // 정렬 기준 필드
-            direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC; // 정렬 방향 설정
+            sortBy = sort[0];
+            direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         }
 
-        // Pageable 객체 생성
         Pageable pageable = PageRequest.of(currentPage - 1, limit, Sort.by(direction, sortBy));
+        log.info("Pageable 설정: {}", pageable);
 
         try {
-            // 서비스 호출 및 Page 객체 반환
             Page<Member> pageResult = memberService.getAllMembers(pageable);
+            log.info("Total pages: {}, Total elements: {}", pageResult.getTotalPages(), pageResult.getTotalElements());
 
-            // 회원 목록이 없는 경우
             if (pageResult.isEmpty()) {
-                ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
+                return ResponseEntity.ok(ApiResponse.<Page<Member>>builder()
                         .success(true)
                         .message("회원이 없습니다.")
-                        .data(Page.empty()) // 빈 페이지 반환
-                        .build();
-                return ResponseEntity.ok(response); // 상태 코드 200으로 빈 데이터 반환
+                        .data(Page.empty())
+                        .build());
             }
 
-            // API 응답 생성
-            ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
+            return ResponseEntity.ok(ApiResponse.<Page<Member>>builder()
                     .success(true)
                     .message("회원 목록 조회 성공")
                     .data(pageResult)
-                    .build();
-
-            return ResponseEntity.ok(response); // 상태 코드 200
-
+                    .build());
         } catch (Exception e) {
-            log.error("회원 목록 조회 중 오류 발생: {}", e.getMessage(), e);
-
-            // 조회 실패 응답 생성
-            ApiResponse<Page<Member>> response = ApiResponse.<Page<Member>>builder()
+            log.error("회원 목록 조회 중 오류: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.<Page<Member>>builder()
                     .success(false)
-                    .message("회원 목록 조회 실패: 서버 오류가 발생했습니다.")
-                    .data(null) // 실패 시 데이터 없음
-                    .build();
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response); // 상태 코드 500
+                    .message("회원 목록 조회 실패")
+                    .build());
         }
     }
+
 
 
 }
