@@ -267,13 +267,14 @@ public class MemberController {
         // 회원가입 처리
         // 엔터티에서 @PrePersist로 대체
         //member.setMemUuid(UUID.randomUUID().toString());
-        int result = memberService.insertMember(member);
-        if (result > 0) {
+        Member savedMember = memberService.insertMember(member);
+        if (savedMember.getMemUuid() != null) {
+            log.info("Member UUID after save: {}", member.getMemUuid());
             // 성공 응답 생성
             ApiResponse<Member> response = ApiResponse.<Member>builder()
                     .success(true)
                     .message("회원가입이 완료되었습니다.")
-                    .data(member)
+                    .data(savedMember)
                     .build();
             return ResponseEntity.status(HttpStatus.CREATED).body(response); // 성공 응답 반환
         } else {

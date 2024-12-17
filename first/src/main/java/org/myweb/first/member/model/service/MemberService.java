@@ -33,7 +33,7 @@ public class MemberService {
      * @Param member 회원 정보 DTO
      */
     @Transactional
-    public int insertMember(Member member) {
+    public Member insertMember(Member member) {
         //save() -> 성공시 Entity, 실패시 null 리턴함, JPA 가 제공하는 메소드임
         try {
             // UUID로 PK생성 후 toString()
@@ -56,17 +56,17 @@ public class MemberService {
             log.info("MemberEntity after save: {}", savedMember);
 
 
-            return 1;
+            return savedMember.toDto();
         } catch (DataIntegrityViolationException e) {
             log.error("Insert Member Data Integrity Violation: {}", e.getMessage(), e);
-            return 0;
+            return null;
         } catch (IllegalArgumentException e) {
             log.error("Insert Member Illegal Argument: {}", e.getMessage(), e);
-            return 0;
+            return null;
         } catch (Exception e) {
             log.error("Insert Member Error: {}", e.getMessage(), e);
             e.printStackTrace();
-            return 0;
+            return null;
         }
     }
 
