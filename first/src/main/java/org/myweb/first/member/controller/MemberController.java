@@ -423,7 +423,6 @@ public class MemberController {
      * @return 처리 결과 (1: 성공, 0: 실패)
      */
     @DeleteMapping("/{memUuid}")
-    @Operation(summary = "회원 삭제", description = "특정 회원을 삭제하는 API")
     @PreAuthorize("hasRole('ADMIN')") // 관리자만 삭제 가능
     public ResponseEntity<ApiResponse<Void>> deleteMember(@PathVariable String memUuid) {
         try {
