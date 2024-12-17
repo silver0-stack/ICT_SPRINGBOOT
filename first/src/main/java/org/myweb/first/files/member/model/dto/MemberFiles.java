@@ -25,6 +25,7 @@ public class MemberFiles {
 
      private String mfRename; // 저장용 파일 이름
 
+
      /**
      * DTO를 Entity로 변환하는 메소드
      * @param member 회원 엔터티 객체
