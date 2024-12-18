@@ -59,7 +59,7 @@ public class SecurityConfig {
                             corsConfig.setAllowCredentials(false); // 클라이언트가 인증 정보를 포함한 요청을 보낼 수 없도록 설정한다.
                             return corsConfig;
                         }))
-                // 권한 룰 설정: HTTP 요청에 대한 권한 규칙을 설정한다.
+                // 권한 룰 설정: HTTP 요청에 대한 권한 규칙을 설정한다
                 .authorizeHttpRequests(authorize -> authorize
                         // **permitAll 설정**: 인증 불필요한 엔드포인트
                         .requestMatchers(
